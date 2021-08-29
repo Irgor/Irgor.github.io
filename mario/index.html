@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="favicon.ico"/>
+    <link rel="icon" type="image/png" href="favicon.ico" />
     <title>Mario Game</title>
 </head>
 
@@ -26,6 +26,12 @@
         <img src="./mw.gif" width="50" id="marioW" class="marioW">
         <img src="https://www.nicepng.com/png/full/169-1691582_mario-pixel-jump-super-mario-world-mario-jumping.png"
             width="50" class="marioJ" id="marioJ" alt="">
+
+
+        <img src="plat.png" class="plat1">
+        <img src="plat.png" class="plat2">
+        <img src="plat.png" class="plat3">
+
     </div>
 
     <div id="b-container">
@@ -41,16 +47,19 @@
 
         .marioS {
             position: absolute;
+            z-index: 2;
         }
 
         .marioW {
             display: none;
             position: absolute;
+            z-index: 2;
         }
 
         .marioJ {
             display: none;
             position: absolute;
+            z-index: 2;
         }
 
         .bg {
@@ -69,6 +78,7 @@
             height: 100%;
             justify-content: center;
             align-items: center;
+            z-index: 20;
         }
 
         .p-b {
@@ -84,6 +94,33 @@
             color: black;
             -webkit-text-stroke: 2px white;
             font-size: 72px;
+        }
+
+        .plat1 {
+            position: absolute;
+            width: 400px;
+            height: 60px;
+            left: 250px;
+            top: 650px;
+            z-index: 1;
+        }
+
+        .plat2 {
+            position: absolute;
+            width: 400px;
+            height: 60px;
+            right: 250px;
+            top: 650px;
+            z-index: 1;
+        }
+
+        .plat3 {
+            position: absolute;
+            width: 400px;
+            height: 60px;
+            top: 450px;
+            left: 750px;
+            z-index: 1;
         }
     </style>
 </body>

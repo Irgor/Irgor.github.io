@@ -29,6 +29,12 @@ char = {
     vy: 0
 };
 
+baseChar = {
+    x: wall / 2 - 50,
+    y: floor - 80,
+    vx: 0,
+    vy: 0
+};
 
 bulletImg = 'https://66.media.tumblr.com/65886392680e19404e112c42855074fc/tumblr_mqatw123nu1rfjowdo1_500.gif';
 bRate = 1000;
@@ -43,6 +49,18 @@ bullets = []
 
 function start() {
     pause = false;
+
+    char.x = wall / 2 - 50;
+    char.y = floor - 80;
+    char.vx = 0;
+    char.vy = 0;
+
+    for (let bu of bullets) {
+        const b = document.getElementById('b' + bu.id);
+        b.parentNode.removeChild(b);
+    }
+
+    bullets = [];
 
     menu = document.getElementById('menu');
     menu.style.display = 'none';
@@ -86,6 +104,8 @@ function game() {
 
     char.vy += g;
     char.y += char.vy;
+
+
 
     if (char.y + 80 >= floor) {
 
@@ -133,6 +153,7 @@ function makeBullet() {
     bImage.setAttribute('width', bSize)
     bImage.setAttribute('height', bHeight)
     bImage.style.position = 'absolute';
+    bImage.style.zIndex = '2';
 
     div.appendChild(bImage);
 
@@ -191,6 +212,12 @@ function checkColision(x, y) {
         st.pause();
         st.currentTime = 0;
 
+        if (jumping) {
+            jumpMario();
+        } else {
+            stopChar();
+        }
+
         setTimeout(() => {
             let go = new Audio('go.mp3');
             go.volume = 0.2;
@@ -198,7 +225,7 @@ function checkColision(x, y) {
         }, 200);
 
         setTimeout(() => {
-            menu.style.display = 'block';
+            menu.style.display = 'flex';
         }, 250);
 
     }
