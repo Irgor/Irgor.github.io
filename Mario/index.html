@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./script.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <title>Mario Game</title>
+</head>
+
+<body>
+
+    <div class="p-cont" id="menu">
+        <div class="p-b" onclick="start()">Play</div>
+        <div class="p-b"> Voltar</div>
+    </div>
+
+    <div>
+        <img src="./bg.png" class="bg" alt="">
+        <img src="./m.png" width="46" id="marioS" class="marioS">
+        <img src="./mw.gif" width="50" id="marioW" class="marioW">
+        <img src="https://www.nicepng.com/png/full/169-1691582_mario-pixel-jump-super-mario-world-mario-jumping.png"
+            width="50" class="marioJ" id="marioJ" alt="">
+    </div>
+
+    <div id="b-container">
+
+    </div>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .marioS {
+            position: absolute;
+        }
+
+        .marioW {
+            display: none;
+            position: absolute;
+        }
+
+        .marioJ {
+            display: none;
+            position: absolute;
+        }
+
+        .bg {
+            height: 104vh;
+            width: 100vw;
+        }
+
+        .p-cont {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .p-b {
+            font-size: 68px;
+            cursor: pointer;
+            color: white;
+            -webkit-text-stroke: 2px black;
+            font-family: 'ZCOOL KuaiLe';
+            transition: all .2s linear;
+        }
+
+        .p-b:hover {
+            color: black;
+            -webkit-text-stroke: 2px white;
+            font-size: 72px;
+        }
+    </style>
+</body>
+
+</html>
