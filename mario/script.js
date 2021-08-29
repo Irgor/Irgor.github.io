@@ -9,6 +9,8 @@ var marioS;
 var marioW;
 var marioJ;
 
+var menu;
+
 g = 1;
 
 move = 4;
@@ -42,7 +44,7 @@ bullets = []
 function start() {
     pause = false;
 
-    const menu = document.getElementById('menu');
+    menu = document.getElementById('menu');
     menu.style.display = 'none';
 
     this.marioS = document.getElementById('marioS');
@@ -194,6 +196,11 @@ function checkColision(x, y) {
             go.volume = 0.2;
             go.play();
         }, 200);
+
+        setTimeout(() => {
+            menu.style.display = 'block';
+        }, 250);
+
     }
 }
 
