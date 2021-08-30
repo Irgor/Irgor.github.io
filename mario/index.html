@@ -20,6 +20,20 @@
         <div class="p-b"> Voltar</div>
     </div>
 
+    <div class="p-cont" id="menuR" style="display: none;">
+        <div class="p-b" style="cursor: default;">Game Over</div>
+        <div class="p-b" onclick="restart()">Play again</div>
+    </div>
+
+    <div class="p-cont" id="menuW" style="display: none;">
+        <div class="p-b" style="cursor: default;">You win</div>
+        <div class="p-b" onclick="restart()">Play again</div>
+    </div>
+
+    <div class="points" id="points">
+        0
+    </div>
+
     <div>
         <img src="./bg.png" class="bg" alt="">
         <img src="./m.png" width="46" id="marioS" class="marioS">
@@ -28,9 +42,9 @@
             width="50" class="marioJ" id="marioJ" alt="">
 
 
-        <img src="plat.png" class="plat1">
-        <img src="plat.png" class="plat2">
-        <img src="plat.png" class="plat3">
+        <img src="plat.png" class="plat" id="p1">
+        <img src="plat.png" class="plat" id="p2">
+        <img src="plat.png" class="plat" id="p3">
 
     </div>
 
@@ -96,31 +110,24 @@
             font-size: 72px;
         }
 
-        .plat1 {
+        .plat {
+            display: none;
             position: absolute;
             width: 400px;
             height: 60px;
-            left: 250px;
-            top: 650px;
             z-index: 1;
         }
 
-        .plat2 {
+        .points {
+            font-size: 68px;
+            cursor: default;
+            color: white;
+            -webkit-text-stroke: 2px black;
+            font-family: 'ZCOOL KuaiLe';
             position: absolute;
-            width: 400px;
-            height: 60px;
-            right: 250px;
-            top: 650px;
-            z-index: 1;
-        }
-
-        .plat3 {
-            position: absolute;
-            width: 400px;
-            height: 60px;
-            top: 450px;
-            left: 750px;
-            z-index: 1;
+            left: 50%;
+            top: 5%;
+            z-index: 80;
         }
     </style>
 </body>
