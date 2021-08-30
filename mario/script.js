@@ -20,7 +20,7 @@ var pDiv;
 platW = 400;
 plats = []
 
-move = 4;
+move = 5;
 jump = 22;
 
 jumpMove = 0.6;
@@ -44,8 +44,8 @@ baseChar = {
 };
 
 bulletImg = 'https://66.media.tumblr.com/65886392680e19404e112c42855074fc/tumblr_mqatw123nu1rfjowdo1_500.gif';
-bRate = 800;
-bSpeed = 5;
+bRate = 500;
+bSpeed = 5.5;
 bSize = '60'
 bHeight = '40';
 bW = +bSize;
@@ -263,7 +263,7 @@ function game() {
 function makeBullet() {
     const div = document.getElementById('b-container');
 
-    const upperGap = 250;
+    const upperGap = 100;
 
     let bullet = {
         id: bullets.length + 1,
