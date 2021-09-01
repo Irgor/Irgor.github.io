@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    <link rel="icon" type="image/png" href="favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <title>Pong</title>
+</head>
+
+<body>
+    <div class="back">
+        Voltar
+    </div>
+
+    <canvas id="canvas"></canvas>
+    <div onclick="start()" class="play" id="play">
+        Play
+    </div>
+    <div id="message" class="message">
+        You win
+    </div>
+    <div class="line"></div>
+    <div class="points me" id="playerP">0</div>
+    <div class="points enemy" id="enemyP">0</div>
+</body>
+
+</html>

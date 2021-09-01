@@ -1,0 +1,82 @@
+body {
+    overflow: hidden;
+    background-image: url("./b.gif");
+    background-size: cover;
+}
+
+#canvas {
+    margin-top: 90px;
+    margin-left: 300px;
+}
+
+.line {
+    position: absolute;
+    height: 81%;
+    margin-top: 90px;
+    width: 2px;
+    left: 50.5%;
+    top: 10px;
+    background-image: linear-gradient(white 33%, rgba(255, 255, 255, 0) 0%);
+    background-position: right;
+    background-size: 150px 40px;
+    background-repeat: repeat-y;
+}
+
+.points {
+    font-family: "Press Start 2P";
+    font-size: 42px;
+    color: white;
+}
+
+.me {
+    position: absolute;
+    top: 130px;
+    left: 45%;
+}
+
+.enemy {
+    position: absolute;
+    top: 130px;
+    left: 55%;
+}
+
+.back {
+    color: white;
+    position: absolute;
+    top: 4%;
+    left: 3%;
+    font-size: 22px;
+    font-family: "Lucida Sans";
+    cursor: pointer;
+    text-decoration: underline;
+    transition: all 0.2s linear;
+}
+
+.back:hover {
+    text-shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
+}
+
+.play {
+    font-size: 32px;
+    font-family: "Press Start 2P";
+    position: absolute;
+    top: 50%;
+    left: 50.7%;
+    transform: translate(-50%, -50%);
+    color: white;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.message {
+    font-size: 42px;
+    font-family: "Press Start 2P";
+    position: absolute;
+    top: 30%;
+    display: none;
+    left: 50.7%;
+    transform: translate(-50%, -50%);
+    color: white;
+    z-index: 10;
+    cursor: pointer;
+}
