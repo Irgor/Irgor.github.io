@@ -11,7 +11,7 @@ body {
 
 .line {
     position: absolute;
-    height: 81%;
+    height: 80vh;
     margin-top: 90px;
     width: 2px;
     left: 50.5%;
@@ -37,7 +37,7 @@ body {
 .enemy {
     position: absolute;
     top: 130px;
-    left: 55%;
+    left: 54%;
 }
 
 .back {

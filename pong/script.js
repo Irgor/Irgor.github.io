@@ -44,7 +44,7 @@ enemy = {
 
 ballh = 24;
 ballw = 24;
-ballmove = 15;
+ballmove = 10;
 ball = {
     x: (vw / 2) - (ballw / 2),
     y: (vh / 2) - (ballh / 2),
@@ -77,7 +77,7 @@ function start() {
     document.getElementById('message').style.display = 'none';
     document.getElementById('play').style.display = 'none';
 
-    gameInterval = setInterval(game, 30);
+    gameInterval = setInterval(game, 26);
     enemyMoveInterval = setInterval(enemyMove, dif);
 
     if (!musicStarted) {
@@ -108,6 +108,14 @@ function randomStartBall() {
 async function game(ball = true) {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, vw, vh);
+
+
+    ctx.fillStyle = 'white';
+    let dotY = 10;
+    for (let i = 0; i < 20; i++) {
+        ctx.fillRect((vw / 2) - 5, dotY, 10, 20);
+        dotY += (20 + 25);
+    }
 
 
     ctx.fillStyle = 'white';
