@@ -80,11 +80,12 @@ function start() {
     gameInterval = setInterval(game, 30);
     enemyMoveInterval = setInterval(enemyMove, dif);
 
-    if(!musicStarted){
+    if (!musicStarted) {
         let ost = new Audio('ost.mp3');
         ost.volume = 0.1;
         ost.loop = true;
         ost.play();
+        musicStarted = !musicStarted;
     }
 }
 
