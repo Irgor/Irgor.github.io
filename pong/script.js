@@ -17,7 +17,7 @@ var enemyPoints = 0;
 var myPointsDiv;
 var enemyPointsDiv;
 
-var dif = 60;
+var dif = 40;
 var hitboxBonus = 20;
 
 charh = 120;
@@ -44,7 +44,7 @@ enemy = {
 
 ballh = 24;
 ballw = 24;
-ballmove = 10;
+ballmove = 15;
 ball = {
     x: (vw / 2) - (ballw / 2),
     y: (vh / 2) - (ballh / 2),
@@ -233,10 +233,11 @@ async function checkWinner() {
         ball.x = (vw / 2) - (ballw / 2);
         ball.y = (vh / 2) - (ballh / 2);
 
+        randomStartBall();
+
         let score = new Audio('win.mp3');
         score.volume = 0.1;
         score.play();
-
 
         clearInterval(gameInterval);
 
@@ -245,10 +246,20 @@ async function checkWinner() {
             document.getElementById('play').style.display = 'block';
             message.innerHTML = 'You Win';
             message.style.display = 'block';
+
+            let youwin = new Audio('winMatch.mp3');
+            youwin.volume = 0.2;
+            youwin.play();
+
         } else if (enemyPoints == pointsToWin) {
             document.getElementById('play').style.display = 'block';
             message.innerHTML = 'You Lose';
             message.style.display = 'block';
+
+            let youlose = new Audio('lose.mp3');
+            youlose.volume = 0.4;
+            youlose.play();
+
         } else {
             setTimeout(() => {
                 gameInterval = setInterval(game, 30)
