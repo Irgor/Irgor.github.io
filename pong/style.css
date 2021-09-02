@@ -2,11 +2,9 @@ body {
     overflow: hidden;
     background-image: url("./b.gif");
     background-size: cover;
-}
-
-#canvas {
-    margin-top: 90px;
-    margin-left: 300px;
+    display: flex;
+    align-self: center;
+    justify-content: center;
 }
 
 .line {
@@ -30,14 +28,14 @@ body {
 
 .me {
     position: absolute;
-    top: 130px;
+    top: 30px;
     left: 45%;
 }
 
 .enemy {
     position: absolute;
-    top: 130px;
-    left: 54%;
+    top: 30px;
+    left: 53%;
 }
 
 .back {
@@ -60,7 +58,7 @@ body {
     font-size: 32px;
     font-family: "Press Start 2P";
     position: absolute;
-    top: 50%;
+    top: 75%;
     left: 50.7%;
     transform: translate(-50%, -50%);
     color: white;

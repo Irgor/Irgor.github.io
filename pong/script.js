@@ -8,8 +8,8 @@ var musicStarted = false;
 var gameInterval;
 var enemyMoveInterval;
 
-var vw = window.innerWidth - 600;
-var vh = window.innerHeight - 200;
+var vw = 800;
+var vh = 600;
 
 var myPoints = 0;
 var enemyPoints = 0;
@@ -17,10 +17,10 @@ var enemyPoints = 0;
 var myPointsDiv;
 var enemyPointsDiv;
 
-var dif = 40;
+var dif = 55;
 var hitboxBonus = 20;
 
-charh = 120;
+charh = 100;
 charw = 24;
 charmove = 10;
 char = {
@@ -31,7 +31,7 @@ char = {
     vy: 0
 }
 
-enemyh = 120;
+enemyh = 100;
 enemyw = 24;
 enemymove = 20;
 enemy = {
@@ -98,7 +98,7 @@ function randomStartBall() {
     let randX = (Math.random() * (ballmove * 2)) - ballmove;
     let randY = (Math.random() * (ballmove * 2)) - ballmove;
 
-    let vx = randX > 0 ? ballmove : -ballmove;
+    let vx = randX > 0 ? ballmove / 2 : -ballmove / 2;
     let vy = randY > 0 ? ballmove / 2 : -ballmove / 2;
 
     ball.vx = vx;
@@ -171,7 +171,7 @@ function checkBallPlayerColision() {
 
     let colid = isXallign && isYallign;
     if (colid) {
-        ball.vx = -ball.vx;
+        ball.vx = ballmove;
 
         let b = new Audio('b.mp3');
         b.volume = 0.5;
@@ -186,7 +186,7 @@ function checkBallEnemyColision() {
 
     let colid = isXallign && isYallign;
     if (colid) {
-        ball.vx = ball.vx * -1;
+        ball.vx = ballmove * -1;
 
         let b = new Audio('b.mp3');
         b.volume = 0.5;
