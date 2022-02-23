@@ -1,0 +1,69 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+}
+
+.ale {
+    width: 50vw;
+    flex-direction: column;
+    display: flex;
+}
+
+.iguinho {
+    width: 50vw;
+    height: 100vh;
+    position: relative;
+    border-left: 1px solid black;
+}
+
+.amogusHeader img{
+    padding-left: 30px;
+}
+
+
+
+/* meu style */
+.ale{
+    background-image: url("img/bg.png");
+    background-size: 150px;
+}
+.ale h1{
+    text-align: center;
+    color: red;
+    -webkit-text-stroke-color: white;
+    -webkit-text-stroke-width: 1px;
+}
+.ale img{
+    width: 250px;
+    margin: 0 auto;
+}
+.myParagraphAle{
+    width: 500px;
+    font-size: 25px;
+    text-align: justify;
+    font-weight: bold;
+    margin: 0 auto;
+    -webkit-text-stroke-width: 1px;
+    background-color: white;
+}
+.ale form{
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    display: flex;
+}
+.ale form input{
+    width: 500px;
+    padding: 8px;
+    margin-bottom: 5px;
+}
+.ale form button{
+    width: 520px;
+    padding: 8px;
+}
+/* fim do meu style */

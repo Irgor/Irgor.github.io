@@ -1,0 +1,147 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+}
+
+.ale {
+    width: 50vw;
+    height: 100vh;
+}
+
+.iguinho {
+    width: 50vw;
+    height: 100vh;
+    position: relative;
+    border-left: 1px solid black;
+}
+
+.homospaiens_background {
+    background: url("https://pbs.twimg.com/profile_images/1364920241265012743/Y__158zv_400x400.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    animation: amogus 4s;
+    animation-iteration-count: infinite;
+}
+
+.homosapiens_nome {
+    font-family: "MonteCarlo", cursive;
+    font-size: 60px;
+    color: blueviolet;
+    cursor: pointer;
+    margin: 20px;
+    margin-left: 40px;
+}
+
+.homosapiens_desc {
+    font-family: "Indie Flower", cursive;
+    font-size: 24px;
+    font-style: italic;
+    color: #000;
+    margin: 20px 40px;
+}
+
+.homosapiens_image {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    height: 180px;
+    width: 200px;
+    background-image: url("http://pa1.narvii.com/7099/7e5c52a2415213a1c051245ca0e5da136d616ef9r1-249-297_00.gif");
+    background-size: contain;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.homosapiens_image:hover {
+    background-image: url("http://pa1.narvii.com/6615/8712ad0c8634feb0816e101607d8f99ecee829b5_00.gif");
+    background-repeat: repeat;
+    background-size: 20%;
+    height: 265px;
+    width: 250px;
+}
+
+.homosapeins_wanted {
+    width: 200px;
+    margin: 6px 38%;
+    border: 6px solid maroon;
+    margin-right: -50px;
+}
+
+.homosapiens_aviso {
+    font-family: "Fredoka One", cursive;
+    font-size: 24px;
+    color: maroon;
+    font-weight: bold;
+    margin: 10px 40px;
+    text-align: center;
+}
+
+.homosapiens_contato {
+    font-family: "Style Script", cursive;
+    font-size: 34px;
+    font-weight: bold;
+    margin-left: 40px;
+}
+
+.homosapiens_form {
+    margin: 2px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 60%;
+}
+
+.homosapiens_form input {
+    height: 25px;
+}
+
+@keyframes amogus {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.alienpls {
+    position: absolute;
+    width: 20vw;
+    height: 80vh;
+    left: 50%;
+    top: -50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.2;
+    animation: alienplsAnimation 8.5s;
+    animation-iteration-count: 1;
+    animation-delay: 5s;
+}
+
+@keyframes alienplsAnimation {
+    0% {
+        top: -50%;
+    }
+    20% {
+        top: 50%;
+    }
+    80% {
+        top: 50%;
+    }
+    100% {
+        top: -50%;
+    }
+}
