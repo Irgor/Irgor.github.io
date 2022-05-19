@@ -78,19 +78,19 @@ window.onload = () => {
             if (y > ey && y < ey + s && x > ex && x < ex + s) {
                 if (isLastClickIn) {
                     if (map[i - 1] && map[i - 1][j].clickIn == true) {
-                        swap({ i: i - 1, j: j }, { i, j });
+                        swap({ i: i - 1, j: j, image: map[i - 1][j].image, eix: 'Y' }, { i, j });
                     }
 
                     if (map[i + 1] && map[i + 1][j].clickIn == true) {
-                        swap({ i: i + 1, j: j }, { i, j });
+                        swap({ i: i + 1, j: j, image: map[i + 1][j].image, eix: 'Y' }, { i, j });
                     }
 
                     if (map[i][j + 1] && map[i][j + 1].clickIn == true) {
-                        swap({ i: i, j: j + 1 }, { i, j });
+                        swap({ i: i, j: j + 1, image: map[i][j + 1].image, eix: 'X' }, { i, j });
                     }
 
                     if (map[i][j - 1] && map[i][j - 1].clickIn == true) {
-                        swap({ i: i, j: j - 1 }, { i, j });
+                        swap({ i: i, j: j - 1, image: map[i][j - 1].image, eix: 'X' }, { i, j });
                     }
 
                 } else {
@@ -117,6 +117,28 @@ function swap(a, b) {
 
     map[a.i][a.j].image = bImage;
     map[b.i][b.j].image = aImage;
+
+    if (aImage == joel) {
+        if (a.eix == 'X') {
+            killRow(b.i);
+        }
+        if(a.eix == 'Y'){
+            killColumn(b.j);
+        }
+    }
+
+}
+
+function killColumn(row) {
+    for (let i = 0; i < lg; i++) {
+        map[i][row].image = null;
+    }
+}
+
+function killRow(column) {
+    for (let j = 0; j < lg; j++) {
+        map[column][j].image = null;
+    }
 }
 
 function game() {
@@ -143,7 +165,7 @@ function detectPowerUps() {
         const image = map[i][j].image;
         let exploded = false;
 
-        // agua do bong == bomba;
+        // agua do bong
         if (!!map[i - 1] && !!map[i + 1] && map[i - 1][j].image == image && map[i + 1][j].image == image) {
             if (!!map[i - 1][j + 1] && !!map[i - 1][j + 2] && map[i - 1][j + 1].image == image && map[i - 1][j + 2].image == image) {
                 map[i - 1][j].image = null;
@@ -152,13 +174,42 @@ function detectPowerUps() {
                 map[i - 1][j + 2].image = null;
                 map[i][j].image = bong;
             }
-
-            if(!!map[i + 1][j + 1] && !!map[i + 1][j + 2] && map[i + 1][j + 1].image == image && map[i + 1][j + 2].image == image){
+        }
+        if (!!map[i - 1] && !!map[i + 1] && map[i - 1][j].image == image && map[i + 1][j].image == image) {
+            if (!!map[i - 1][j - 1] && !!map[i - 1][j - 2] && map[i - 1][j - 1].image == image && map[i - 1][j - 2].image == image) {
                 map[i - 1][j].image = null;
                 map[i + 1][j].image = null;
-                map[i + 1][j + 1].image = null;
-                map[i + 1][j + 2].image = null;
+                map[i - 1][j - 1].image = null;
+                map[i - 1][j - 2].image = null;
                 map[i][j].image = bong;
+            }
+        }
+        if (!!map[i][j - 1] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j + 1].image == image) {
+            if (!!map[i + 1][j] && !!map[i + 2][j] && map[i + 1][j].image == image && map[i + 2][j].image == image) {
+                map[i + 1][j].image = null;
+                map[i + 2][j].image = null;
+                map[i][j - 1].image = null;
+                map[i][j + 1].image = null;
+                map[i][j].image = bong;
+            }
+        }
+
+        // Joelzinho
+        if (!!map[i][j - 1] && !!map[i][j - 2] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j - 2].image == image && map[i][j + 1].image == image) {
+            if(!!map[i][j - 1].image && !!map[i][j - 2].image && !!map[i][j + 1].image){
+
+                map[i][j - 1].image = null;
+                map[i][j + 1].image = null;
+                map[i][j].image = null;
+                map[i][j - 2].image = joel;
+            }
+        }
+        if (!!map[i - 1] && !!map[i - 2] && !!map[i + 1] && map[i - 1][j].image == image && map[i - 2][j].image == image && map[i + 1][j].image == image) {
+            if(!!map[i - 1].image && !!map[i - 2].image && !!map[i + 1].image){
+                map[i - 1][j].image = null;
+                map[i + 1][j].image = null;
+                map[i][j].image = null;
+                map[i - 2][j].image = joel;
             }
         }
 
