@@ -241,6 +241,11 @@ function detectMatchs() {
             exploded = true;
         }
 
+        if (!!map[i][j + 1] && !!map[i][j + 2] && map[i][j + 1].image == map[i][j + 2].image && image == bong) {
+            killBomb(i, j);
+            exploded = true;
+        }
+
         if (exploded) {
             if (!neverClicked) {
                 points += (squarePts * 3);
