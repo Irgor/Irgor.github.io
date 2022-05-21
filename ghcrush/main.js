@@ -1,7 +1,7 @@
 var canvas, ctx, pts;
 var points = 0;
 var squarePts = 1;
-var fps = 120;
+var fps = 200;
 var hF = 800, wF = 800;
 
 var x = 0, y = 0;
@@ -122,7 +122,7 @@ function swap(a, b) {
         if (a.eix == 'X') {
             killRow(b.i);
         }
-        if(a.eix == 'Y'){
+        if (a.eix == 'Y') {
             killColumn(b.j);
         }
     }
@@ -185,7 +185,7 @@ function detectPowerUps() {
             }
         }
         if (!!map[i][j - 1] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j + 1].image == image) {
-            if (!!map[i + 1][j] && !!map[i + 2][j] && map[i + 1][j].image == image && map[i + 2][j].image == image) {
+            if (!!map[i + 1] && !!map[i + 2] && map[i + 1][j].image == image && map[i + 2][j].image == image) {
                 map[i + 1][j].image = null;
                 map[i + 2][j].image = null;
                 map[i][j - 1].image = null;
@@ -196,8 +196,7 @@ function detectPowerUps() {
 
         // Joelzinho
         if (!!map[i][j - 1] && !!map[i][j - 2] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j - 2].image == image && map[i][j + 1].image == image) {
-            if(!!map[i][j - 1].image && !!map[i][j - 2].image && !!map[i][j + 1].image){
-
+            if (!!map[i][j - 1].image && !!map[i][j - 2].image && !!map[i][j + 1].image) {
                 map[i][j - 1].image = null;
                 map[i][j + 1].image = null;
                 map[i][j].image = null;
@@ -205,7 +204,7 @@ function detectPowerUps() {
             }
         }
         if (!!map[i - 1] && !!map[i - 2] && !!map[i + 1] && map[i - 1][j].image == image && map[i - 2][j].image == image && map[i + 1][j].image == image) {
-            if(!!map[i - 1].image && !!map[i - 2].image && !!map[i + 1].image){
+            if (!!map[i - 1][j].image && !!map[i - 2][j].image && !!map[i + 1][j].image) {
                 map[i - 1][j].image = null;
                 map[i + 1][j].image = null;
                 map[i][j].image = null;
@@ -237,6 +236,11 @@ function detectMatchs() {
             exploded = true;
         }
 
+        if (!!map[i][j - 1] && !!map[i][j + 1] && map[i][j - 1].image == map[i][j + 1].image && image == bong) {
+            killBomb(i, j);
+            exploded = true;
+        }
+
         if (exploded) {
             if (!neverClicked) {
                 points += (squarePts * 3);
@@ -245,6 +249,36 @@ function detectMatchs() {
     }
 
     doAllSquares(check);
+}
+
+function killBomb(i, j) {
+    map[i][j - 1].image = null;
+    map[i][j].image = null;
+    map[i][j + 1].image = null;
+
+    if (!!map[i + 1]) {
+        map[i + 1][j].image = null;
+
+        if (!!map[i + 1][j - 1]) {
+            map[i + 1][j - 1].image = null
+        }
+
+        if (!!map[i + 1][j + 1]) {
+            map[i + 1][j + 1].image = null
+        }
+    }
+
+    if (!!map[i - 1]) {
+        map[i - 1][j].image = null;
+
+        if (!!map[i - 1][j - 1]) {
+            map[i - 1][j - 1].image = null
+        }
+
+        if (!!map[i - 1][j + 1]) {
+            map[i - 1][j + 1].image = null
+        }
+    }
 }
 
 function fallSquares() {
