@@ -163,7 +163,6 @@ function generateNewSquare() {
 function detectPowerUps() {
     const check = (i, j) => {
         const image = map[i][j].image;
-        let exploded = false;
 
         // agua do bong
         if (!!map[i - 1] && !!map[i + 1] && map[i - 1][j].image == image && map[i + 1][j].image == image) {
@@ -193,8 +192,27 @@ function detectPowerUps() {
                 map[i][j].image = bong;
             }
         }
+        if (!!map[i - 2] && !!map[i - 1] && map[i - 2][j].image == image && map[i - 1][j].image == image) {
+            if (!!map[i][j - 1] && !!map[i][j - 2] && map[i][j - 1].image == image && map[i][j - 2].image == image) {
+                map[i - 2][j].image = null;
+                map[i - 1][j].image = null;
+                map[i][j - 1].image = null;
+                map[i][j - 2].image = null;
+                map[i][j].image = bong;
+            }
+        }
 
-        // Joelzinho
+        if(!!map[i - 2] && !!map[i - 1] && map[i - 2][j].image == image && map[i - 1][j].image == image){
+            if(!!map[i][j + 1] && !!map[i][j + 2] && map[i][j + 1].image == image && map[i][j + 2].image == image){
+                map[i - 2][j].image = null;
+                map[i - 1][j].image = null;
+                map[i][j + 1].image = null;
+                map[i][j + 2].image = null;
+                map[i][j].image = bong;
+            }
+        }
+
+
         if (!!map[i][j - 1] && !!map[i][j - 2] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j - 2].image == image && map[i][j + 1].image == image) {
             if (!!map[i][j - 1].image && !!map[i][j - 2].image && !!map[i][j + 1].image) {
                 map[i][j - 1].image = null;
@@ -211,6 +229,8 @@ function detectPowerUps() {
                 map[i - 2][j].image = joel;
             }
         }
+
+
 
     }
 
@@ -233,16 +253,6 @@ function detectMatchs() {
             map[i][j - 1].image = null;
             map[i][j].image = null;
             map[i][j + 1].image = null;
-            exploded = true;
-        }
-
-        if (!!map[i][j - 1] && !!map[i][j + 1] && map[i][j - 1].image == map[i][j + 1].image && image == bong) {
-            killBomb(i, j);
-            exploded = true;
-        }
-
-        if (!!map[i][j + 1] && !!map[i][j + 2] && map[i][j + 1].image == map[i][j + 2].image && image == bong) {
-            killBomb(i, j);
             exploded = true;
         }
 
@@ -284,6 +294,8 @@ function killBomb(i, j) {
             map[i - 1][j + 1].image = null
         }
     }
+
+    points += (squarePts * 9);
 }
 
 function fallSquares() {
