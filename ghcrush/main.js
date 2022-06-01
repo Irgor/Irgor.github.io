@@ -98,6 +98,20 @@ window.onload = () => {
                     map[i][j].clickIn = true;
                     lastClickIn.i = i;
                     lastClickIn.j = j;
+
+                    if (map[i][j].image == bong) {
+                        killBomb(i, j);
+                        map[i][j].clickIn = false;
+                        isLastClickIn = false;
+                    }
+
+                    if(map[i][j].image == chin){
+                        killRow(i);
+                        killColumn(j);
+
+                        map[i][j].clickIn = false;
+                        isLastClickIn = false;
+                    }
                 }
             }
         }
@@ -108,25 +122,43 @@ window.onload = () => {
 
 }
 
-function swap(a, b) {
+function swap(origin, target) {
     isLastClickIn = false;
-    const aImage = map[a.i][a.j].image;
-    const bImage = map[b.i][b.j].image;
+    const originImage = map[origin.i][origin.j].image;
+    const targetImage = map[target.i][target.j].image;
 
-    map[a.i][a.j].clickIn = false;
+    map[origin.i][origin.j].clickIn = false;
 
-    map[a.i][a.j].image = bImage;
-    map[b.i][b.j].image = aImage;
+    map[origin.i][origin.j].image = targetImage;
+    map[target.i][target.j].image = originImage;
 
-    if (aImage == joel) {
-        if (a.eix == 'X') {
-            killRow(b.i);
+    if (originImage == joel) {
+        if (origin.eix == 'X') {
+            killRow(target.i);
         }
-        if (a.eix == 'Y') {
-            killColumn(b.j);
+        if (origin.eix == 'Y') {
+            killColumn(target.j);
         }
     }
 
+    if(origin.image == gh) {
+        map[target.i][target.j].image = null;
+        killAllSame(targetImage);
+    }
+}
+
+function killAllSame(target) {
+    let count = 0
+    const killAll = (i, j) => {
+        if(map[i][j].image == target) {
+            map[i][j].image = null;
+            count++;
+        }
+    }
+
+    doAllSquares(killAll);
+    
+    points += count * squarePts;
 }
 
 function killColumn(row) {
@@ -163,6 +195,10 @@ function generateNewSquare() {
 function detectPowerUps() {
     const check = (i, j) => {
         const image = map[i][j].image;
+
+        if(!map[i][j].image){
+            return;
+        }
 
         // agua do bong
         if (!!map[i - 1] && !!map[i + 1] && map[i - 1][j].image == image && map[i + 1][j].image == image) {
@@ -201,9 +237,8 @@ function detectPowerUps() {
                 map[i][j].image = bong;
             }
         }
-
-        if(!!map[i - 2] && !!map[i - 1] && map[i - 2][j].image == image && map[i - 1][j].image == image){
-            if(!!map[i][j + 1] && !!map[i][j + 2] && map[i][j + 1].image == image && map[i][j + 2].image == image){
+        if (!!map[i - 2] && !!map[i - 1] && map[i - 2][j].image == image && map[i - 1][j].image == image) {
+            if (!!map[i][j + 1] && !!map[i][j + 2] && map[i][j + 1].image == image && map[i][j + 2].image == image) {
                 map[i - 2][j].image = null;
                 map[i - 1][j].image = null;
                 map[i][j + 1].image = null;
@@ -211,8 +246,33 @@ function detectPowerUps() {
                 map[i][j].image = bong;
             }
         }
+        if (!!map[i - 1] && !!map[i - 2] && map[i - 1][j].image == image && map[i - 2][j].image == image) {
+            if (!!map[i][j - 1] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j + 1].image == image) {
+                map[i - 1][j].image = null;
+                map[i - 2][j].image = null;
+                map[i][j - 1].image = null;
+                map[i][j + 1].image = null;
+                map[i][j].image = bong;
+            }
+        }
 
+        //Brigadeiro
+        if (!!map[i - 2] && !!map[i - 1] && !!map[i + 1] && !!map[i + 2] && map[i - 2][j].image == image && map[i - 1][j].image == image && map[i + 1][j].image == image && map[i + 2][j].image == image) {
+            map[i - 2][j].image = null;
+            map[i - 1][j].image = null;
+            map[i + 2][j].image = null;
+            map[i + 1][j].image = null;
+            map[i][j].image = gh;
+        }
+        if (!!map[i][j - 2] && !!map[i][j - 1] && !!map[i][j + 1] && !!map[i][j + 2] && map[i][j - 2].image == image && map[i][j - 1].image == image && map[i][j + 1].image == image && map[i][j + 2].image == image) {
+            map[i][j - 2].image = null;
+            map[i][j - 1].image = null;
+            map[i][j + 2].image = null;
+            map[i][j + 1].image = null;
+            map[i][j].image = gh;
+        }
 
+        // joel
         if (!!map[i][j - 1] && !!map[i][j - 2] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j - 2].image == image && map[i][j + 1].image == image) {
             if (!!map[i][j - 1].image && !!map[i][j - 2].image && !!map[i][j + 1].image) {
                 map[i][j - 1].image = null;
@@ -230,8 +290,13 @@ function detectPowerUps() {
             }
         }
 
-
-
+        //xina
+        if(!!map[i - 1] && !!map[i][j + 1] && !!map[i - 1][j + 1] && map[i - 1][j].image == image && map[i][j + 1].image == image && map[i - 1][j + 1].image == image){
+            map[i - 1][j].image = null;
+            map[i - 1][j + 1].image = null;
+            map[i][j + 1].image = null;
+            map[i][j].image = chin;
+        }
     }
 
     doAllSquares(check);
