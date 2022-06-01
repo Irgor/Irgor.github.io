@@ -105,7 +105,7 @@ window.onload = () => {
                         isLastClickIn = false;
                     }
 
-                    if(map[i][j].image == chin){
+                    if (map[i][j].image == chin) {
                         killRow(i);
                         killColumn(j);
 
@@ -122,7 +122,7 @@ window.onload = () => {
 
 }
 
-function swap(origin, target) {
+async function swap(origin, target, canBack = true) {
     isLastClickIn = false;
     const originImage = map[origin.i][origin.j].image;
     const targetImage = map[target.i][target.j].image;
@@ -131,6 +131,15 @@ function swap(origin, target) {
 
     map[origin.i][origin.j].image = targetImage;
     map[target.i][target.j].image = originImage;
+
+    const hasMatch = detectMoveMatchs();
+
+    if(!hasMatch && originImage != joel && origin != gh && canBack) {
+        await setTimeout(() => {
+            swap(target, origin, false);
+            return;
+        }, 200);
+    }
 
     if (originImage == joel) {
         if (origin.eix == 'X') {
@@ -141,7 +150,7 @@ function swap(origin, target) {
         }
     }
 
-    if(origin.image == gh) {
+    if (origin.image == gh) {
         map[target.i][target.j].image = null;
         killAllSame(targetImage);
     }
@@ -150,14 +159,14 @@ function swap(origin, target) {
 function killAllSame(target) {
     let count = 0
     const killAll = (i, j) => {
-        if(map[i][j].image == target) {
+        if (map[i][j].image == target) {
             map[i][j].image = null;
             count++;
         }
     }
 
     doAllSquares(killAll);
-    
+
     points += count * squarePts;
 }
 
@@ -196,7 +205,7 @@ function detectPowerUps() {
     const check = (i, j) => {
         const image = map[i][j].image;
 
-        if(!map[i][j].image){
+        if (!map[i][j].image) {
             return;
         }
 
@@ -291,7 +300,7 @@ function detectPowerUps() {
         }
 
         //xina
-        if(!!map[i - 1] && !!map[i][j + 1] && !!map[i - 1][j + 1] && map[i - 1][j].image == image && map[i][j + 1].image == image && map[i - 1][j + 1].image == image){
+        if (!!map[i - 1] && !!map[i][j + 1] && !!map[i - 1][j + 1] && map[i - 1][j].image == image && map[i][j + 1].image == image && map[i - 1][j + 1].image == image) {
             map[i - 1][j].image = null;
             map[i - 1][j + 1].image = null;
             map[i][j + 1].image = null;
@@ -302,32 +311,49 @@ function detectPowerUps() {
     doAllSquares(check);
 }
 
-function detectMatchs() {
-    const check = (i, j) => {
-        const image = map[i][j].image;
-        let exploded = false;
-
-        if (!!map[i - 1] && !!map[i + 1] && map[i - 1][j].image == image && map[i + 1][j].image == image) {
-            map[i - 1][j].image = null;
-            map[i][j].image = null;
-            map[i + 1][j].image = null;
-            exploded = true;
-        }
-
-        if (!!map[i][j - 1] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j + 1].image == image) {
-            map[i][j - 1].image = null;
-            map[i][j].image = null;
-            map[i][j + 1].image = null;
-            exploded = true;
-        }
-
-        if (exploded) {
-            if (!neverClicked) {
-                points += (squarePts * 3);
+function detectMoveMatchs() {
+    for (let i = 0; i < map.length; i++) {
+        for (let j = 0; j < map[i].length; j++) {
+            const resp = check(i, j, true);
+            if (resp) {
+                return true;
             }
         }
     }
+}
 
+function check(i, j, returnOnFirst = false) {
+    const image = map[i][j].image;
+    let exploded = false;
+
+    if (!!map[i - 1] && !!map[i + 1] && map[i - 1][j].image == image && map[i + 1][j].image == image) {
+        if (returnOnFirst) {
+            return true;
+        }
+        map[i - 1][j].image = null;
+        map[i][j].image = null;
+        map[i + 1][j].image = null;
+        exploded = true;
+    }
+
+    if (!!map[i][j - 1] && !!map[i][j + 1] && map[i][j - 1].image == image && map[i][j + 1].image == image) {
+        if (returnOnFirst) {
+            return true;
+        }
+        map[i][j - 1].image = null;
+        map[i][j].image = null;
+        map[i][j + 1].image = null;
+        exploded = true;
+    }
+
+    if (exploded) {
+        if (!neverClicked) {
+            points += (squarePts * 3);
+        }
+    }
+}
+
+function detectMatchs() {
     doAllSquares(check);
 }
 
