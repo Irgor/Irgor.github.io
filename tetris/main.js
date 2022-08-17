@@ -17,7 +17,7 @@ window.onload = function () {
     buildMap();
     callBlock();
     setInterval(game, 100)
-    setInterval(moves, 50);
+    setInterval(moves, 500);
 }
 
 window.addEventListener('keydown', (e) => {
@@ -36,7 +36,7 @@ function buildMap() {
     for (let i = 0; i < 20; i++) {
         map[i] = [];
         for (let j = 0; j < 10; j++) {
-            map[i].push({ x, y, block: false, color: null });
+            map[i].push({ x, y, block: false, color: null, blockR: false, blockL: false });
             x += side;
         }
         x = 0;
@@ -55,11 +55,94 @@ function moves() {
 
 function moveBlock() {
     if (keys.ArrowRight) {
-        
+        moveRigthPiece(1)
     }
 
     if (keys.ArrowLeft) {
+        moveLeftPiece(-1)
     }
+}
+
+function moveRigthPiece(dir) {
+    for (let i = map.length - 1; i != -1; i--) {
+        for (let j = 9; j > -1; j--) {
+            const celula = map[i][j];
+            if (celula.id == actualBlock) {
+                checkMoveRigthAllSame(actualBlock, i, j, dir);
+                if (map[i][j + dir] && map[i][j + dir].id !== actualBlock && !map[i][j].blockR) {
+                    let color = map[i][j].color;
+                    let id = map[i][j].id;
+                    map[i][j].color = null;
+                    map[i][j].block = false;
+                    map[i][j].id = null;
+                    map[i][j + dir].block = true;
+                    map[i][j + dir].color = color;
+                    map[i][j + dir].id = id;
+                }
+
+            }
+        }
+    }
+}
+
+function blockRightId(id) {
+    for (let linha of map) {
+        for (let celula of linha) {
+            if (celula.id == id) {
+                celula.blockR = true;
+            }
+        }
+    }
+}
+
+function checkMoveRigthAllSame(id, iabove, dir) {
+    for (let i = iabove; i > -1; i--) {
+        for (let j = 9; j > -1; j--) {
+            if (map[i][j + dir] && map[i][j].id == id && map[i][j + dir].block && map[i][j + dir].id != id) {
+                blockRightId(id);
+            }
+            if (!map[i][j + dir] && map[i][j].id == id) {
+                blockRightId(id);
+            }
+        }
+    }
+}
+
+function moveLeftPiece(dir) {
+    for (let i = map.length - 1; i != -1; i--) {
+        for (let j = 0; j < 10; j++) {
+            const celula = map[i][j];
+            if (celula.id == actualBlock) {
+                const canMove = checkMoveLeftAllSame(actualBlock, i, j, dir);
+                if (canMove && map[i][j + dir] && map[i][j + dir].id !== actualBlock) {
+                    let color = map[i][j].color;
+                    let id = map[i][j].id;
+                    map[i][j].color = null;
+                    map[i][j].block = false;
+                    map[i][j].id = null;
+                    map[i][j + dir].block = true;
+                    map[i][j + dir].color = color;
+                    map[i][j + dir].id = id;
+                }
+
+            }
+        }
+    }
+}
+
+function checkMoveLeftAllSame(id, iabove, jabove, dir) {
+    let canMove = true;
+    for (let i = iabove; i > -1; i--) {
+        for (let j = jabove; j < 10; j++) {
+            if (map[i][j + dir] && map[i][j].id == id && map[i][j + dir].block && map[i][j + dir].id != id) {
+                canMove = false;
+            }
+            if (!map[i][j + dir] && map[i][j].id == id) {
+                canMove = false;
+            }
+        }
+    }
+    return canMove;
 }
 
 function callBlock() {
@@ -69,7 +152,7 @@ function callBlock() {
 function spawnBlock() {
     const color = colors[Math.floor(Math.random() * colors.length)];
 
-    const j = Math.floor(Math.random() * 8);
+    const j = 4;
     const i = 0;
 
     const id = Math.max(...stopedIds) + 1;
@@ -108,6 +191,11 @@ const pecas = (color) => [
         createBlock(i + 2, j, color, id);
         createBlock(i + 3, j, color, id);
         createBlock(i + 4, j, color, id);
+    },
+    (i, j, id) => {
+        createBlock(i + 1, j + 1, color, id);
+        createBlock(i + 1, j - 1, color, id);
+        createBlock(i + 1, j, color, id);
     }
 ];
 
