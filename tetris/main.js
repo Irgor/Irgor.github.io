@@ -6,6 +6,9 @@ map = [];
 blocks = [];
 stopedIds = [0];
 actualBlock = 0;
+moveVelocity = 500;
+fastVelocity = 40;
+var moveInterval;
 
 keys = {};
 
@@ -17,7 +20,11 @@ window.onload = function () {
     buildMap();
     callBlock();
     setInterval(game, 100)
-    setInterval(moves, 500);
+    callMoveInterval();
+}
+
+function callMoveInterval() {
+    moveInterval = setInterval(moves, moveVelocity);
 }
 
 window.addEventListener('keydown', (e) => {
@@ -61,6 +68,20 @@ function moveBlock() {
     if (keys.ArrowLeft) {
         moveLeftPiece(-1)
     }
+
+    if (keys.ArrowDown) {
+        if (moveVelocity != fastVelocity) {
+            newMoveInterval(fastVelocity)
+        }
+    } else {
+        newMoveInterval(500);
+    }
+}
+
+function newMoveInterval(velocity) {
+    clearInterval(moveInterval);
+    moveVelocity = velocity;
+    callMoveInterval();
 }
 
 function moveRigthPiece(dir) {
@@ -95,9 +116,12 @@ function blockRightId(id) {
     }
 }
 
-function checkMoveRigthAllSame(id, iabove, dir) {
+function checkMoveRigthAllSame(id, iabove, jabove, dir) {
+    let firstRow = true;
     for (let i = iabove; i > -1; i--) {
-        for (let j = 9; j > -1; j--) {
+        const jstart = firstRow ? jabove : 9;
+        firstRow = false;
+        for (let j = jstart; j > -1; j--) {
             if (map[i][j + dir] && map[i][j].id == id && map[i][j + dir].block && map[i][j + dir].id != id) {
                 blockRightId(id);
             }
@@ -113,8 +137,8 @@ function moveLeftPiece(dir) {
         for (let j = 0; j < 10; j++) {
             const celula = map[i][j];
             if (celula.id == actualBlock) {
-                const canMove = checkMoveLeftAllSame(actualBlock, i, j, dir);
-                if (canMove && map[i][j + dir] && map[i][j + dir].id !== actualBlock) {
+                checkMoveLeftAllSame(actualBlock, i, j, dir);
+                if (map[i][j + dir] && map[i][j + dir].id !== actualBlock && !map[i][j].blockL) {
                     let color = map[i][j].color;
                     let id = map[i][j].id;
                     map[i][j].color = null;
@@ -130,22 +154,34 @@ function moveLeftPiece(dir) {
     }
 }
 
-function checkMoveLeftAllSame(id, iabove, jabove, dir) {
-    let canMove = true;
-    for (let i = iabove; i > -1; i--) {
-        for (let j = jabove; j < 10; j++) {
-            if (map[i][j + dir] && map[i][j].id == id && map[i][j + dir].block && map[i][j + dir].id != id) {
-                canMove = false;
-            }
-            if (!map[i][j + dir] && map[i][j].id == id) {
-                canMove = false;
+function blockLeftId(id) {
+    for (let linha of map) {
+        for (let celula of linha) {
+            if (celula.id == id) {
+                celula.blockL = true;
             }
         }
     }
-    return canMove;
+}
+
+function checkMoveLeftAllSame(id, iabove, jabove, dir) {
+    let firstRow = true;
+    for (let i = iabove; i > -1; i--) {
+        const jstart = firstRow ? jabove : 9;
+        firstRow = false;
+        for (let j = jstart; j < 10; j++) {
+            if (map[i][j + dir] && map[i][j].id == id && map[i][j + dir].block && map[i][j + dir].id != id) {
+                blockLeftId(id);
+            }
+            if (!map[i][j + dir] && map[i][j].id == id) {
+                blockLeftId(id);
+            }
+        }
+    }
 }
 
 function callBlock() {
+    newMoveInterval(500);
     spawnBlock();
 }
 
