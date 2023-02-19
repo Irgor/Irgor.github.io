@@ -1,0 +1,60 @@
+* {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    cursor: none;
+}
+
+.main {
+    background-color: black;
+    width: 100vw;
+    height: 100vw;
+}
+
+.px {
+    content: '';
+    position: absolute;
+    border-radius: 100%;
+    background-color: wheat;
+    box-shadow: 0px 0px 500px 150px rgba(255, 255, 0, 0.12);
+    width: 20px;
+    height: 20px;
+    animation: move 5s infinite;
+    border-collapse: collapse;
+}
+
+.dot {
+    background-color: rgba(255, 255, 255, 0.6);
+    width: 5px;
+    height: 5px;
+    border-radius: 100%;
+    position: absolute;
+    mix-blend-mode: soft-light;
+    animation: moveDot infinite;
+}
+
+@keyframes moveDot {
+    0% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+
+    50% {
+        margin-left: 4%;
+        margin-top: -3%;
+    }
+
+    100% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+}
+
+.texto {
+    position: absolute;
+    left: 20%;
+    top: 80%;
+    font-size: 20px;
+    color: white;
+    mix-blend-mode: soft-light;
+}
