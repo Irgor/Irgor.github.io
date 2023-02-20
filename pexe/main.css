@@ -1,8 +1,11 @@
 * {
     margin: 0;
     padding: 0;
-    overflow: hidden;
     cursor: none;
+}
+
+body {
+    overflow: hidden;
 }
 
 .main {
@@ -16,10 +19,10 @@
     position: absolute;
     border-radius: 100%;
     background-color: wheat;
-    box-shadow: 0px 0px 500px 150px rgba(255, 255, 0, 0.12);
+    box-shadow: 0px 0px 200px 100px #ffff001f;
+    transition: box-shadow 1s ease-in-out;;
     width: 20px;
     height: 20px;
-    animation: move 5s infinite;
     border-collapse: collapse;
 }
 
@@ -30,10 +33,10 @@
     border-radius: 100%;
     position: absolute;
     mix-blend-mode: soft-light;
-    animation: moveDot infinite;
+    animation-iteration-count: infinite;
 }
 
-@keyframes moveDot {
+@keyframes move1 {
     0% {
         margin-left: 0%;
         margin-top: 0%;
@@ -50,11 +53,70 @@
     }
 }
 
-.texto {
-    position: absolute;
-    left: 20%;
-    top: 80%;
-    font-size: 20px;
-    color: white;
-    mix-blend-mode: soft-light;
+@keyframes move2 {
+    0% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+
+    50% {
+        margin-left: -4%;
+        margin-top: 3%;
+    }
+
+    100% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+}
+
+@keyframes move3 {
+    0% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+
+    50% {
+        margin-left: 4%;
+        margin-top: 3%;
+    }
+
+    100% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+}
+
+@keyframes move4 {
+    0% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+
+    50% {
+        margin-left: -3%;
+        margin-top: -4%;
+    }
+
+    100% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+}
+
+@keyframes move5 {
+    0% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
+
+    50% {
+        margin-left: -2%;
+        margin-top: 4%;
+    }
+
+    100% {
+        margin-left: 0%;
+        margin-top: 0%;
+    }
 }
