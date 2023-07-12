@@ -1,0 +1,40 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.main {
+    width: 100vw;
+    height: 100vh;
+    background-color: #7f8cc0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button {
+    font-size: 22px;
+    background-color: #ecdcdf;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 5px 5px 8px rgba(0, 0, 0, .2);
+}
+
+.msg {
+    position: absolute;
+    width: 80vw;
+    height: 50vh;
+    background-image: url('gato.jpg');
+    background-size: cover;
+    background-position: -50px;
+
+    transition: all 1s;
+    display: none;
+
+    top: 0px;
+    left: 0px;
+    transform: rotateZ(0deg);
+    transform: rotateY(0deg);
+
+}
