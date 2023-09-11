@@ -63,7 +63,7 @@ body {
 @media screen and (max-width: 865px) {
     .clock {
         font-size: 9rem;
-        width: 80%;
+        width: 78%;
         transform: translate(-50%, -65%);
     }
 }
