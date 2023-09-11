@@ -1,7 +1,6 @@
 body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
 }
 
 .main {
@@ -10,6 +9,7 @@ body {
     background-color: #7f8cc0;
     display: flex;
     justify-content: center;
+    overflow: hidden;
     align-items: center;
 }
 

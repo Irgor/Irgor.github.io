@@ -1,7 +1,15 @@
+@font-face {
+    font-family: octo;
+    src: url('assets/October_Crow.ttf');
+}
+
 * {
     margin: 0;
     padding: 0;
     cursor: none;
+    user-select: none;
+    font-family: octo;
+    overflow: hidden;
 }
 
 body {
@@ -14,13 +22,13 @@ body {
     height: 100vh;
 }
 
-.px {
+.mouse {
     content: '';
     position: absolute;
     border-radius: 100%;
-    background-color: wheat;
-    box-shadow: 0px 0px 200px 100px #ffff001f;
-    transition: box-shadow 1s ease-in-out;;
+    background-image: url('assets/lantern.png');
+    background-size: cover;
+    transition: box-shadow 1s ease-in-out;
     width: 20px;
     height: 20px;
     border-collapse: collapse;
@@ -34,6 +42,30 @@ body {
     position: absolute;
     mix-blend-mode: soft-light;
     animation-iteration-count: infinite;
+}
+
+.clock {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 22rem;
+    z-index: 20;
+    mix-blend-mode: soft-light;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+@media screen and (max-width: 865px) {
+    .clock {
+        font-size: 8rem;
+        width: 85%;
+        transform: translate(-50%, -65%);
+    }
 }
 
 @keyframes move1 {

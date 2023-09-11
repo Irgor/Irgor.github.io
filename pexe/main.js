@@ -1,25 +1,38 @@
-var px;
+var mouse;
 var dotts = 0;
 var isMobile
+var timeToHall = 0;
+var daysToHall = 0;
+var offset = 0;
 window.onload = function () {
-    px = document.getElementById('px');
-    dots();
+    mouse = document.getElementById('mouse');
     isMobile = detectMob();
+
+    dots();
+    countDown();
+    setInterval(() => { countDown() }, 500);
+
+    offset = 1 - daysToHall / 55;
+    document.getElementById('mouse').style.boxShadow = `0px 0px 200px 100px rgba(245, 144, 111, ${offset})`
 }
 
 window.onmousemove = function (e) {
-    if (px) {
-        px.style.left = e.pageX + 'px';
-        px.style.top = e.pageY + 'px';
+    if (mouse) {
+        mouse.style.left = e.pageX + 'px';
+        mouse.style.top = e.pageY + 'px';
     }
 }
 
 window.onmousedown = function () {
-    document.getElementById('px').style.boxShadow = '0px 0px 500px 250px #ffff001f'
+    if (!isMobile) {
+        document.getElementById('mouse').style.boxShadow = `0px 0px 500px 250px rgba(245, 144, 111, ${offset})`
+    }
 }
 
 window.onmouseup = function () {
-    document.getElementById('px').style.boxShadow = '0px 0px 200px 100px #ffff001f'
+    if (!isMobile) {
+        document.getElementById('mouse').style.boxShadow = `0px 0px 200px 100px rgba(245, 144, 111, ${offset})`
+    }
 }
 
 function dots() {
@@ -28,8 +41,8 @@ function dots() {
         const dot = document.createElement('div');
         dot.classList.add('dot')
 
-        dot.style.left = Math.floor(Math.random() * document.documentElement.scrollWidth - 25) + 'px';
-        dot.style.top = Math.floor(Math.random() * document.documentElement.scrollHeight - 25) + 'px';
+        dot.style.left = Math.floor(Math.random() * screen.width - 30) + 'px';
+        dot.style.top = Math.floor(Math.random() * screen.height - 30) + 'px';
 
         const height = Math.floor(Math.random() * 16) + 1;
         dot.style.height = height + 'px'
@@ -47,6 +60,32 @@ function dots() {
     }
 
     console.log(dotts + ' dots');
+}
+
+function countDown() {
+    const clock = document.getElementById('clock');
+    const nowDate = new Date();
+    const hall = new Date('10-31-2023 00:00');
+
+    timeToHall = hall.getTime() - nowDate.getTime()
+    const days = Math.floor(timeToHall / (1000 * 3600 * 24));
+    const hours = Math.floor((timeToHall / (1000 * 3600)) % 24);
+    const minutes = Math.floor((timeToHall / (1000 * 60)) % 60);
+    const seconds = Math.floor((timeToHall / (1000)) % 60);
+
+    daysToHall = days;
+
+    clock.innerHTML = `${addZeroIfNeeded(days)}:${addZeroIfNeeded(hours)}:${addZeroIfNeeded(minutes)}:${addZeroIfNeeded(seconds)}`
+}
+
+function addZeroIfNeeded(number) {
+    const string = number.toString();
+
+    if (string.length < 2) {
+        return '0' + string
+    }
+
+    return string;
 }
 
 function detectMob() {
