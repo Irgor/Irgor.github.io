@@ -65,7 +65,8 @@ function dots() {
 function countDown() {
     const clock = document.getElementById('clock');
     const nowDate = new Date();
-    const hall = new Date('10-31-2023 00:00');
+    const year = nowDate.getFullYear();
+    const hall = new Date(`10-31-${year} 00:00`);
 
     timeToHall = hall.getTime() - nowDate.getTime()
     const days = Math.floor(timeToHall / (1000 * 3600 * 24));
