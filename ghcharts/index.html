@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficos com Chart.js</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            /* Altura total da viewport */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            /* Centraliza os gráficos verticalmente */
+            overflow: hidden;
+        }
+
+        .chart-container {
+            height: 80vh;
+            /* 80% da altura da tela */
+            width: 100%;
+            /* Largura total */
+            margin: 10% 0;
+            /* Margem de 10% em cima e embaixo */
+        }
+
+        canvas {
+            height: 100% !important;
+            /* O canvas ocupa 100% da altura do contêiner */
+            width: 100% !important;
+            /* O canvas ocupa 100% da largura do contêiner */
+        }
+
+        .button-holder {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            -webkit-gap: 20px;
+        }
+
+        .button-next {
+            text-align: center;
+            font-family: monospace;
+            font-size: 24px;
+            background: rgba(75, 192, 192, 0.6);
+            padding: 5px 20px;
+            border-radius: 8px;
+            border: 2px solid cadetblue;
+            box-sizing: border-box;
+            width: 150px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <div class="button-holder">
+
+        <div class="button-next" onclick="changeChartBack()">
+            Previous
+        </div>
+        <div class="button-next" onclick="changeChart()">
+            Next
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const json = {
+            "msgsPerMemberSorted": {
+                "Lexandre": 19682,
+                "Riq": 12936,
+                "Mari": 9478,
+                "Will 268": 7846,
+                "Joel": 5736,
+                "Igor": 5007,
+                "Gustavinho": 1680,
+                "Chinese Antônio": 1527,
+                "Luska": 398
+            },
+            "msgsPerMemberPerDayAvg": {
+                "Lexandre": "69.5",
+                "Riq": "45.7",
+                "Mari": "33.5",
+                "Will 268": "27.7",
+                "Joel": "20.3",
+                "Igor": "17.7",
+                "Gustavinho": "5.9",
+                "Chinese Antônio": "5.4",
+                "Luska": "1.4"
+            },
+            "allWeekDaysSorted": {
+                "Segunda": 12870,
+                "Terca": 11263,
+                "Quinta": 10823,
+                "Quarta": 10024,
+                "Sexta": 8513,
+                "Sabado": 6541,
+                "Domingo": 4256
+            },
+            "msgHoursSorted": {
+                "10": 7873,
+                "11": 6884,
+                "12": 5437,
+                "13": 4142,
+                "14": 4101,
+                "15": 3003,
+                "16": 3265,
+                "17": 3643,
+                "18": 3223,
+                "19": 1881,
+                "20": 2123,
+                "21": 2089,
+                "22": 2230,
+                "23": 1958,
+                "09": 6053,
+                "08": 2924,
+                "00": 1685,
+                "07": 950,
+                "01": 448,
+                "06": 168,
+                "02": 74,
+                "05": 69,
+                "04": 34,
+                "03": 33
+            },
+            "morningPerMemberSorted": {
+                "Lexandre": 140,
+                "Joel": 105,
+                "Will 268": 94,
+                "Riq": 68,
+                "Igor": 62,
+                "Chinese Antônio": 33,
+                "Mari": 22,
+                "Gustavinho": 5,
+                "Luska": 4
+            },
+            "memberTaggedSorted": {
+                "Riq": 198,
+                "Mari": 167,
+                "Lexandre": 166,
+                "Joel": 135,
+                "Will 268": 113,
+                "Igor": 105,
+                "Luska": 73,
+                "Gustavinho": 68,
+                "Chinese Antônio": 65
+            },
+            "memberTaggerSorted": {
+                "Lexandre": 368,
+                "Will 268": 201,
+                "Riq": 155,
+                "Gustavinho": 70,
+                "Chinese Antônio": 47,
+                "Mari": 41,
+                "Joel": 31,
+                "Luska": 18,
+                "Igor": 11
+            },
+            "kkkPerMemberSorted": {
+                "Lexandre": 57920,
+                "Joel": 26462,
+                "Riq": 19306,
+                "Chinese Antônio": 19080,
+                "Mari": 12091,
+                "Gustavinho": 7016,
+                "Will 268": 5213,
+                "Igor": 3433,
+                "Luska": 464
+            },
+            "kkkPerMemberPerMessageAvg": {
+                "Lexandre": "2.9",
+                "Riq": "1.5",
+                "Mari": "1.3",
+                "Will 268": "0.7",
+                "Joel": "4.6",
+                "Igor": "0.7",
+                "Gustavinho": "4.2",
+                "Chinese Antônio": "12.5",
+                "Luska": "1.2"
+            },
+            "mediaPerMemberSorted": {
+                "Lexandre": 2881,
+                "Riq": 1028,
+                "Mari": 895,
+                "Will 268": 546,
+                "Joel": 462,
+                "Igor": 305,
+                "Gustavinho": 154,
+                "Chinese Antônio": 56,
+                "Luska": 26
+            },
+            "mediaPerMemberPerDayAvg": {
+                "Lexandre": "10.2",
+                "Riq": "3.6",
+                "Mari": "3.2",
+                "Will 268": "1.9",
+                "Joel": "1.6",
+                "Igor": "1.1",
+                "Gustavinho": "0.5",
+                "Chinese Antônio": "0.2",
+                "Luska": "0.1"
+            },
+            "longestYearMessageSorted": {
+                "Gustavinho": 64574,
+                "Lexandre": 64151,
+                "Riq": 15999,
+                "Joel": 7920,
+                "Chinese Antônio": 5334,
+                "Luska": 2228,
+                "Mari": 2177,
+                "Will 268": 975,
+                "Igor": 597
+            },
+            "totalCursesSorted": {
+                "Lexandre": 3742,
+                "Gustavinho": 3283,
+                "Riq": 224,
+                "Mari": 152,
+                "Will 268": 124,
+                "Igor": 64,
+                "Joel": 63,
+                "Chinese Antônio": 19,
+                "Luska": 6
+            },
+            "totalCursePerMsgSorted": {
+                "Lexandre": 352,
+                "Riq": 158,
+                "Mari": 150,
+                "Will 268": 123,
+                "Igor": 64,
+                "Joel": 63,
+                "Gustavinho": 45,
+                "Chinese Antônio": 19,
+                "Luska": 6
+            },
+            "percentOfCursesSorted": {
+                "Gustavinho": "2.68",
+                "Lexandre": "1.79",
+                "Mari": "1.58",
+                "Will 268": "1.57",
+                "Luska": "1.51",
+                "Igor": "1.28",
+                "Chinese Antônio": "1.24",
+                "Riq": "1.22",
+                "Joel": "1.10"
+            }
+        }
+
+        let currentChartIndex = 0; // Índice do gráfico atual
+        const chartDataArray = [
+            {
+                label: 'Mensagens por Membro',
+                chart: json.msgsPerMemberSorted,
+            },
+            {
+                label: 'Média de Mensagens por Dia',
+                chart: json.msgsPerMemberPerDayAvg,
+            },
+            {
+                label: 'Mensagens por dia da semana',
+                chart: json.allWeekDaysSorted,
+            },
+            {
+                label: 'Mensagens por horas do dia',
+                chart: json.msgHoursSorted,
+            },
+            {
+                label: '"Bom dia"s por membro',
+                chart: json.morningPerMemberSorted,
+            },
+            {
+                label: 'Quantidades de menções ao membro',
+                chart: json.memberTaggedSorted,
+            },
+            {
+                label: 'Quantidades de vezes que mencionou',
+                chart: json.memberTaggerSorted,
+            },
+            {
+                label: "K's por membro",
+                chart: json.kkkPerMemberSorted,
+            },
+            {
+                label: "Imagens por membro",
+                chart: json.mediaPerMemberSorted,
+            },
+            {
+                label: "Média de Imagens por membro por dia",
+                chart: json.mediaPerMemberPerDayAvg,
+            },
+            {
+                label: "Tamanho em caracteres da maior mensagem do ano",
+                chart: json.longestYearMessageSorted,
+            },
+            {
+                label: "Total de palavrões por membro",
+                chart: json.totalCursesSorted,
+            },
+            {
+                label: "Porcentagem de palavrão/mensagem por membro",
+                chart: json.percentOfCursesSorted,
+            },
+        ];
+
+        let chartInstance; // Variável para armazenar a instância do gráfico
+
+        function createChart(chartData) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar', // Tipo de gráfico (pode mudar conforme necessário)
+                data: {
+                    labels: Object.keys(chartData.chart),
+                    datasets: [{
+                        label: chartData.label,
+                        data: Object.values(chartData.chart).map(Number), // Converte valores para número
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inicializa o primeiro gráfico
+        createChart(chartDataArray[currentChartIndex]);
+
+        // Função para mudar o gráfico
+        function changeChart() {
+            currentChartIndex++;
+            if (currentChartIndex >= chartDataArray.length) {
+                currentChartIndex = 0; // Volta para o primeiro gráfico
+            }
+            // Destrói o gráfico atual antes de criar o próximo
+            if (chartInstance) {
+                chartInstance.destroy(); // Destroi o gráfico atual
+            }
+            createChart(chartDataArray[currentChartIndex]); // Cria o próximo gráfico
+        }
+
+        // Mude o gráfico a cada 5 segundos (5000 ms)
+        // setInterval(changeChart, 1000);
+
+        function changeChartBack() {
+            currentChartIndex--; // Decrementa o índice do gráfico atual
+            if (currentChartIndex < 0) {
+                currentChartIndex = chartDataArray.length - 1; // Volta para o último gráfico se o índice for menor que 0
+            }
+            updateChart();
+        }
+
+        function updateChart() {
+            const chartData = chartDataArray[currentChartIndex];
+            const ctx = document.getElementById('myChart').getContext('2d');
+
+            // Verifica se já existe uma instância do gráfico e a destrói
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Cria um novo gráfico
+            chartInstance = new Chart(ctx, {
+                type: 'bar', // Tipo de gráfico (pode mudar conforme necessário)
+                data: {
+                    labels: Object.keys(chartData.chart),
+                    datasets: [{
+                        label: chartData.label,
+                        data: Object.values(chartData.chart).map(Number), // Converte valores para número
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
