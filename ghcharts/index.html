@@ -4,34 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gráficos com Chart.js</title>
+    <title>GH charts</title>
     <style>
         body {
             margin: 0;
             height: 100vh;
-            /* Altura total da viewport */
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            /* Centraliza os gráficos verticalmente */
             overflow: hidden;
         }
 
         .chart-container {
-            height: 80vh;
-            /* 80% da altura da tela */
+            height: 75vh;
             width: 100%;
-            /* Largura total */
-            margin: 10% 0;
-            /* Margem de 10% em cima e embaixo */
+            margin-top: 2%;
         }
 
         canvas {
             height: 100% !important;
-            /* O canvas ocupa 100% da altura do contêiner */
             width: 100% !important;
-            /* O canvas ocupa 100% da largura do contêiner */
         }
 
         .button-holder {
@@ -39,6 +32,7 @@
             flex-direction: row;
             gap: 20px;
             -webkit-gap: 20px;
+            margin: 2% 0;
         }
 
         .button-next {
@@ -310,17 +304,17 @@
             },
         ];
 
-        let chartInstance; // Variável para armazenar a instância do gráfico
+        let chartInstance;
 
         function createChart(chartData) {
             const ctx = document.getElementById('myChart').getContext('2d');
             chartInstance = new Chart(ctx, {
-                type: 'bar', // Tipo de gráfico (pode mudar conforme necessário)
+                type: 'bar',
                 data: {
                     labels: Object.keys(chartData.chart),
                     datasets: [{
                         label: chartData.label,
-                        data: Object.values(chartData.chart).map(Number), // Converte valores para número
+                        data: Object.values(chartData.chart).map(Number),
                         backgroundColor: 'rgba(75, 192, 192, 0.6)',
                         borderColor: 'rgba(75, 192, 192, 1)',
                         borderWidth: 1
@@ -338,29 +332,25 @@
             });
         }
 
-        // Inicializa o primeiro gráfico
         createChart(chartDataArray[currentChartIndex]);
 
-        // Função para mudar o gráfico
         function changeChart() {
             currentChartIndex++;
             if (currentChartIndex >= chartDataArray.length) {
-                currentChartIndex = 0; // Volta para o primeiro gráfico
+                currentChartIndex = 0;
             }
-            // Destrói o gráfico atual antes de criar o próximo
+
             if (chartInstance) {
-                chartInstance.destroy(); // Destroi o gráfico atual
+                chartInstance.destroy();
             }
-            createChart(chartDataArray[currentChartIndex]); // Cria o próximo gráfico
+            createChart(chartDataArray[currentChartIndex]);
         }
 
-        // Mude o gráfico a cada 5 segundos (5000 ms)
-        // setInterval(changeChart, 1000);
 
         function changeChartBack() {
-            currentChartIndex--; // Decrementa o índice do gráfico atual
+            currentChartIndex--;
             if (currentChartIndex < 0) {
-                currentChartIndex = chartDataArray.length - 1; // Volta para o último gráfico se o índice for menor que 0
+                currentChartIndex = chartDataArray.length - 1;
             }
             updateChart();
         }
@@ -369,19 +359,16 @@
             const chartData = chartDataArray[currentChartIndex];
             const ctx = document.getElementById('myChart').getContext('2d');
 
-            // Verifica se já existe uma instância do gráfico e a destrói
             if (chartInstance) {
                 chartInstance.destroy();
             }
-
-            // Cria um novo gráfico
             chartInstance = new Chart(ctx, {
-                type: 'bar', // Tipo de gráfico (pode mudar conforme necessário)
+                type: 'bar',
                 data: {
                     labels: Object.keys(chartData.chart),
                     datasets: [{
                         label: chartData.label,
-                        data: Object.values(chartData.chart).map(Number), // Converte valores para número
+                        data: Object.values(chartData.chart).map(Number),
                         backgroundColor: 'rgba(75, 192, 192, 0.6)',
                         borderColor: 'rgba(75, 192, 192, 1)',
                         borderWidth: 1
