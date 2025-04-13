@@ -1,3 +1,5 @@
+let animating = true;
+
 const canvas = document.getElementById('life');
 const ctx = canvas.getContext('2d');
 
@@ -131,28 +133,29 @@ const getGroupByKey = (key) => {
 }
 
 const update = () => {
+  if (!animating) return;
 
   rulesGroup.forEach((ruleControl, key) => {
     const from = getGroupByKey(ruleControl.from);
     const to = getGroupByKey(ruleControl.to);
-    let value = ruleControl.value
+    let value = ruleControl.value;
     if (ruleControl.att) {
       value = value * -1;
     }
 
     rule(from, to, value);
-  })
+  });
 
   ctx.clearRect(0, 0, 500, 500);
   draw(0, 0, 'black', 500);
 
-  for (i = 0; i < particles.length; i++) {
-    const particle = particles[i];
-    drawParticle(particle);
+  for (let i = 0; i < particles.length; i++) {
+    drawParticle(particles[i]);
   }
 
   requestAnimationFrame(update);
-}
+};
+
 
 update();
 
@@ -254,7 +257,58 @@ document.getElementById('jsonFileInput').addEventListener('change', function (ev
     }
   };
 
-  reader.readAsText(file); // read file as text
+  reader.readAsText(file);
 });
 
+function exportGIF(duration = 10000, frameDelay = 50) {
+  animating = false; // Pausa o loop principal
 
+  simulate(); // Garante que os valores estejam atualizados
+  let frames = duration / frameDelay;
+
+  const gif = new GIF({
+    workers: 2,
+    quality: 10,
+    width: canvas.width,
+    height: canvas.height,
+    workerScript: 'libs/gif.worker.js' // caminho local correto
+  });
+
+  let currentFrame = 0;
+
+  function captureNextFrame() {
+    // Atualiza lógica da simulação manualmente
+    rulesGroup.forEach((ruleControl) => {
+      const from = getGroupByKey(ruleControl.from);
+      const to = getGroupByKey(ruleControl.to);
+      let value = ruleControl.att ? -ruleControl.value : ruleControl.value;
+      rule(from, to, value);
+    });
+
+    ctx.clearRect(0, 0, 500, 500);
+    draw(0, 0, 'black', 500);
+    for (let i = 0; i < particles.length; i++) {
+      drawParticle(particles[i]);
+    }
+
+    gif.addFrame(ctx, { copy: true, delay: frameDelay });
+    currentFrame++;
+
+    if (currentFrame < frames) {
+      setTimeout(captureNextFrame, frameDelay); // sem travar a UI
+    } else {
+      gif.on('finished', function (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'simulation.gif';
+        a.click();
+        animating = true; // Volta a simular normalmente
+        update(); // Retoma animação
+      });
+      gif.render();
+    }
+  }
+
+  captureNextFrame();
+}

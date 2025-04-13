@@ -146,9 +146,19 @@
       <br>
 
       <button onclick="simulate()">Simulate</button>
-      <button onclick="reset()">Reset</button>
-      <button onclick="exp()">Export</button>
+      <button onclick="reset()">Reset Configs</button>
+      <button onclick="exp()">Export Configs</button>
+      
+      <br>
+      <br>
+
+      Importar Configs
       <input type="file" accept=".json" id="jsonFileInput">
+
+      <br>
+      <br>
+
+      <button onclick="exportGIF()">Export GIF</button>
 
     </div>
 
@@ -184,6 +194,7 @@
     }
   </style>
 
+  <script src="libs/gif.js"></script>
   <script src="index.js"></script>
 </body>
 
