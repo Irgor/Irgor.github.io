@@ -243,6 +243,7 @@ document.getElementById('jsonFileInput').addEventListener('change', function (ev
 
         const range = document.getElementById(key);
         range.value = json[key].value * 100 + '';
+        range.nextElementSibling.innerHTML = json[key].value * 100 + '';
 
         const att = document.getElementById(key + '-att');
         att.checked = json[key].att;
