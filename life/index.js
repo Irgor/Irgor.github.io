@@ -268,7 +268,7 @@ function exportGIF(duration = 10000, frameDelay = 50) {
 
   const gif = new GIF({
     workers: 2,
-    quality: 10,
+    quality: 1,
     width: canvas.width,
     height: canvas.height,
     workerScript: 'libs/gif.worker.js' // caminho local correto
