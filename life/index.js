@@ -188,7 +188,11 @@ function simulate() {
 }
 
 function reset() {
-  document.querySelectorAll('input').forEach((input => input.type == 'checkbox' ? input.checked = false : input.value = 0));
+  document.querySelectorAll('input').forEach((input => {
+    if(input.type != 'file') {
+      input.type == 'checkbox' ? input.checked = false : input.value = 0
+    }
+  }))
   document.querySelectorAll("input[id^='amount']").forEach((input) => input.value = 400);
   document.querySelectorAll('output').forEach((output) => output.innerHTML = '0');
   rulesGroup.clear();
