@@ -3,6 +3,10 @@ let animating = true;
 const canvas = document.getElementById('life');
 const ctx = canvas.getContext('2d');
 
+let size = +document.getElementById('canvawidth').value
+canvas.setAttribute('height', size + '');
+canvas.setAttribute('width', size + '');
+
 const rulesGroup = new Map();
 
 const draw = (x, y, color, size) => {
@@ -27,7 +31,7 @@ const genParticle = (x, y, color) => {
 }
 
 const getRandomPos = () => {
-  return Math.random() * 400 + 50
+  return Math.random() * (size - 100) + 50
 }
 
 const createGroup = (groupSize, color) => {
@@ -68,16 +72,16 @@ const rule = (group1, group2, attraction) => {
     if (a.x <= 0) {
       a.x = 0;
       a.vx *= -1;
-    } else if (a.x >= 500) {
-      a.x = 500;
+    } else if ((a.x + 5) >= size) {
+      a.x = size - 5;
       a.vx *= -1;
     }
 
     if (a.y <= 0) {
       a.y = 0;
       a.vy *= -1;
-    } else if (a.y >= 500) {
-      a.y = 500;
+    } else if ((a.y + 5) >= size) {
+      a.y = size - 5;
       a.vy *= -1;
     }
   }
@@ -117,8 +121,8 @@ const restartCanvas = () => {
   pink = [];
   particles = [];
 
-  ctx.clearRect(0, 0, 500, 500);
-  draw(0, 0, 'black', 500);
+  ctx.clearRect(0, 0, size, size);
+  draw(0, 0, 'black', size);
 
   createAllGroups();
 }
@@ -139,15 +143,12 @@ const update = () => {
     const from = getGroupByKey(ruleControl.from);
     const to = getGroupByKey(ruleControl.to);
     let value = ruleControl.value;
-    if (ruleControl.att) {
-      value = value * -1;
-    }
 
     rule(from, to, value);
   });
 
-  ctx.clearRect(0, 0, 500, 500);
-  draw(0, 0, 'black', 500);
+  ctx.clearRect(0, 0, size, size);
+  draw(0, 0, 'black', size);
 
   for (let i = 0; i < particles.length; i++) {
     drawParticle(particles[i]);
@@ -160,6 +161,10 @@ const update = () => {
 update();
 
 function simulate() {
+  size = +document.getElementById('canvawidth').value
+  canvas.setAttribute('height', size + '');
+  canvas.setAttribute('width', size + '');
+
   const inputs = document.querySelectorAll('input[type=range]');
   rulesGroup.clear();
   for (let input of inputs) {
@@ -169,37 +174,38 @@ function simulate() {
       from: id[0],
       to: id[1],
       value: input.value / 100,
-      att: false
     }
 
     rulesGroup.set(input.id, newRule);
   }
 
-  const atts = document.querySelectorAll('input[type=checkbox]');
-  for (let att of atts) {
-    if (att.id.includes('enable')) {
-      continue;
-    }
-
-    const id = att.id.split('-att')[0];
-    const getRule = rulesGroup.get(id);
-    getRule.att = att.checked;
-    rulesGroup.set(id, getRule);
-  }
 
   restartCanvas();
 }
 
 function reset() {
   document.querySelectorAll('input').forEach((input => {
-    if(input.type != 'file') {
-      input.type == 'checkbox' ? input.checked = false : input.value = 0
+    if (input.type == 'range') {
+      input.value = 0
     }
   }))
   document.querySelectorAll("input[id^='amount']").forEach((input) => input.value = 400);
   document.querySelectorAll('output').forEach((output) => output.innerHTML = '0');
   rulesGroup.clear();
   restartCanvas();
+}
+
+function random() {
+  document.querySelectorAll('input').forEach((input => {
+    if (input.type == 'range') {
+      input.value = Math.floor(Math.random() * 201) - 100;
+      input.nextElementSibling.innerHTML = input.value;
+    }
+
+    if (input.type == 'number' && input.id != 'canvawidth') {
+      input.value = Math.floor(Math.random() * 301) + 300;
+    }
+  }))
 }
 
 function exp() {
@@ -245,11 +251,8 @@ document.getElementById('jsonFileInput').addEventListener('change', function (ev
         }
 
         const range = document.getElementById(key);
-        range.value = json[key].value * 100 + '';
-        range.nextElementSibling.innerHTML = json[key].value * 100 + '';
-
-        const att = document.getElementById(key + '-att');
-        att.checked = json[key].att;
+        range.value = Math.floor(json[key].value * 100) + '';
+        range.nextElementSibling.innerHTML = Math.floor(json[key].value * 100) + '';
       }
 
     } catch (err) {
@@ -260,10 +263,20 @@ document.getElementById('jsonFileInput').addEventListener('change', function (ev
   reader.readAsText(file);
 });
 
-function exportGIF(duration = 10000, frameDelay = 50) {
-  animating = false; // Pausa o loop principal
+function promptGif() {
+  const dur = prompt('Gif duration (in seconds)');
+  exportGIF(dur * 1000);
+}
 
-  simulate(); // Garante que os valores estejam atualizados
+function exportGIF(duration = 10000, frameDelay = 50) {
+  animating = false; 
+
+  document.getElementById('exporting').classList.remove('none');
+  document.getElementById('controls').classList.add('none');
+  document.title = 'exporting...';
+
+  simulate(); 
+
   let frames = duration / frameDelay;
 
   const gif = new GIF({
@@ -271,22 +284,22 @@ function exportGIF(duration = 10000, frameDelay = 50) {
     quality: 1,
     width: canvas.width,
     height: canvas.height,
-    workerScript: 'libs/gif.worker.js' // caminho local correto
+    workerScript: 'libs/gif.worker.js' 
   });
 
   let currentFrame = 0;
 
   function captureNextFrame() {
-    // Atualiza lógica da simulação manualmente
+
     rulesGroup.forEach((ruleControl) => {
       const from = getGroupByKey(ruleControl.from);
       const to = getGroupByKey(ruleControl.to);
-      let value = ruleControl.att ? -ruleControl.value : ruleControl.value;
+      let value = ruleControl.value;
       rule(from, to, value);
     });
 
-    ctx.clearRect(0, 0, 500, 500);
-    draw(0, 0, 'black', 500);
+    ctx.clearRect(0, 0, size, size);
+    draw(0, 0, 'black', size);
     for (let i = 0; i < particles.length; i++) {
       drawParticle(particles[i]);
     }
@@ -304,6 +317,9 @@ function exportGIF(duration = 10000, frameDelay = 50) {
         a.download = 'simulation.gif';
         a.click();
         animating = true; // Volta a simular normalmente
+        document.getElementById('exporting').classList.add('none');
+        document.getElementById('controls').classList.remove('none');
+        document.title = 'life sim';
         update(); // Retoma animação
       });
       gif.render();

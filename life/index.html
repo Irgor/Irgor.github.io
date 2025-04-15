@@ -10,163 +10,168 @@
 <body>
   <div class="page">
 
-    <canvas id="life" width="500" height="500"></canvas>
+    <canvas id="life"></canvas>
 
-    <div class="controls">
+    <div id="controls" class="controls">
       <div class="inputs">
-
-        Red: <input value="400" type="number" min="0" max="400" id="amount-red">
+        Red: <input value="400" type="number" min="0" max="600" id="amount-red">
         <br>
 
         <div class="line-control red">
-          <label for="red-red">To Red</label><input id="red-red" type="range" value="0" min="0" max="50"
+          <label for="red-red">To Red</label><input id="red-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="red-red-att">Atttract?</label> <input id="red-red-att" type="checkbox">
         </div>
 
         <div class="line-control red">
-          <label for="red-blue">To Blue</label><input id="red-blue" type="range" value="0" min="0" max="50"
+          <label for="red-blue">To Blue</label><input id="red-blue" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="red-blue-att">Atttract?</label> <input id="red-blue-att" type="checkbox">
         </div>
 
         <div class="line-control red">
-          <label for="red-green">To Green</label><input id="red-green" type="range" value="0" min="0" max="50"
+          <label for="red-green">To Green</label><input id="red-green" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="red-green-att">Atttract?</label> <input id="red-green-att" type="checkbox">
         </div>
 
         <div class="line-control red">
-          <label for="red-pink">To Pink</label><input id="red-pink" type="range" value="0" min="0" max="50"
+          <label for="red-pink">To Pink</label><input id="red-pink" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="red-pink-att">Atttract?</label> <input id="red-pink-att" type="checkbox">
         </div>
 
         <br>
-        Blue: <input value="400" type="number" min="0" max="400" id="amount-blue">
+        Blue: <input value="400" type="number" min="0" max="600" id="amount-blue">
         <br>
 
         <div class="line-control blue">
-          <label for="blue-red">To Red</label><input id="blue-red" type="range" value="0" min="0" max="50"
+          <label for="blue-red">To Red</label><input id="blue-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="blue-red-att">Atttract?</label> <input id="blue-red-att" type="checkbox">
         </div>
 
         <div class="line-control blue">
-          <label for="blue-blue">To Blue</label><input id="blue-blue" type="range" value="0" min="0" max="50"
+          <label for="blue-blue">To Blue</label><input id="blue-blue" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="blue-blue-att">Atttract?</label> <input id="blue-blue-att" type="checkbox">
         </div>
 
         <div class="line-control blue">
-          <label for="blue-green">To Green</label><input id="blue-green" type="range" value="0" min="0" max="50"
+          <label for="blue-green">To Green</label><input id="blue-green" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="blue-green-att">Atttract?</label> <input id="blue-green-att" type="checkbox">
         </div>
 
         <div class="line-control blue">
-          <label for="blue-pink">To Pink</label><input id="blue-pink" type="range" value="0" min="0" max="50"
+          <label for="blue-pink">To Pink</label><input id="blue-pink" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="blue-pink-att">Atttract?</label> <input id="blue-pink-att" type="checkbox">
         </div>
 
         <br>
-        Green: <input value="400" type="number" min="0" max="400" id="amount-green">
+        Green: <input value="400" type="number" min="0" max="600" id="amount-green">
         <br>
 
         <div class="line-control green">
-          <label for="green-red">To Red</label><input id="green-red" type="range" value="0" min="0" max="50"
+          <label for="green-red">To Red</label><input id="green-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="green-red-att">Atttract?</label> <input id="green-red-att" type="checkbox">
         </div>
 
         <div class="line-control green">
-          <label for="green-blue">To Blue</label><input id="green-blue" type="range" value="0" min="0" max="50"
+          <label for="green-blue">To Blue</label><input id="green-blue" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="green-blue-att">Atttract?</label> <input id="green-blue-att" type="checkbox">
         </div>
 
         <div class="line-control green">
-          <label for="green-green">To Green</label><input id="green-green" type="range" value="0" min="0" max="50"
+          <label for="green-green">To Green</label><input id="green-green" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="green-green-att">Atttract?</label> <input id="green-green-att" type="checkbox">
         </div>
 
         <div class="line-control green">
-          <label for="green-pink">To Pink</label><input id="green-pink" type="range" value="0" min="0" max="50"
+          <label for="green-pink">To Pink</label><input id="green-pink" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="green-pink-att">Atttract?</label> <input id="green-pink-att" type="checkbox">
         </div>
 
         <br>
-        Pink: <input value="400" type="number" min="0" max="400" id="amount-pink">
+        Pink: <input value="400" type="number" min="0" max="600" id="amount-pink">
         <br>
 
         <div class="line-control pink">
-          <label for="pink-red">To Red</label><input id="pink-red" type="range" value="0" min="0" max="50"
+          <label for="pink-red">To Red</label><input id="pink-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="pink-red-att">Atttract?</label> <input id="pink-red-att" type="checkbox">
         </div>
 
         <div class="line-control pink">
-          <label for="pink-blue">To Blue</label><input id="pink-blue" type="range" value="0" min="0" max="50"
+          <label for="pink-blue">To Blue</label><input id="pink-blue" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="pink-blue-att">Atttract?</label> <input id="pink-blue-att" type="checkbox">
         </div>
 
         <div class="line-control pink">
-          <label for="pink-green">To Green</label><input id="pink-green" type="range" value="0" min="0" max="50"
+          <label for="pink-green">To Green</label><input id="pink-green" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="pink-green-att">Atttract?</label> <input id="pink-green-att" type="checkbox">
         </div>
 
         <div class="line-control pink">
-          <label for="pink-pink">To Pink</label><input id="pink-pink" type="range" value="0" min="0" max="50"
+          <label for="pink-pink">To Pink</label><input id="pink-pink" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
           <output>0</output>
-          <label for="pink-pink-att">Atttract?</label> <input id="pink-pink-att" type="checkbox">
         </div>
       </div>
 
       <br>
+      <br>
+
+      Size (px): <input type="number" placeholder="400" value="400" id="canvawidth">
+
+      <br>
+      <br>
+      <br>
 
       <button onclick="simulate()">Simulate</button>
       <button onclick="reset()">Reset Configs</button>
+      <button onclick="random()">Random Configs</button>
       <button onclick="exp()">Export Configs</button>
-      
+
       <br>
       <br>
 
       Importar Configs
       <input type="file" accept=".json" id="jsonFileInput">
 
+
       <br>
       <br>
 
-      <button onclick="exportGIF()">Export GIF</button>
+      <button onclick="promptGif()">Export GIF</button>
+
+
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
 
     </div>
+
+    <div id="exporting" class="none">Exporting...</div>
 
   </div>
 
   <style>
+    body {
+      overflow: hidden;
+    }
+
     .page {
-      width: 100%;
       display: flex;
       align-items: flex-start;
       flex-wrap: wrap;
@@ -174,12 +179,11 @@
     }
 
     .controls {
-      width: 400px;
+      width: max-content;
     }
 
     .line-control {
       align-items: center;
-      ;
       display: flex;
     }
 
@@ -188,9 +192,20 @@
       width: 70px;
     }
 
-    .line-control input,
+    .line-control input {
+      margin-right: 10px;
+      width: 400px;
+    }
+
     .line-control output {
       margin-right: 10px;
+    }
+
+    #exporting {
+    }
+
+    .none {
+      display: none !important;
     }
   </style>
 
