@@ -3,11 +3,19 @@ let animating = true;
 const canvas = document.getElementById('life');
 const ctx = canvas.getContext('2d');
 
-let size = +document.getElementById('canvawidth').value
-canvas.setAttribute('height', size + '');
-canvas.setAttribute('width', size + '');
+let size;
+const getCanvasSize = () => {
+  size = +document.getElementById('canvawidth').value
+  canvas.setAttribute('height', size + '');
+  canvas.setAttribute('width', size + '');
+
+  document.querySelectorAll('input[id$="-view"]').forEach((input) => input.setAttribute('max', size + ''));
+}
+
+getCanvasSize();
 
 const rulesGroup = new Map();
+const groupVision = new Map();
 
 const draw = (x, y, color, size) => {
   ctx.fillStyle = color;
@@ -20,13 +28,14 @@ const drawParticle = (particle) => {
 
 let particles = [];
 
-const genParticle = (x, y, color) => {
+const genParticle = (x, y, color, vision) => {
   return {
     x,
     y,
     color,
     vx: 0,
     vy: 0,
+    vision
   }
 }
 
@@ -34,10 +43,10 @@ const getRandomPos = () => {
   return Math.random() * (size - 100) + 50
 }
 
-const createGroup = (groupSize, color) => {
+const createGroup = ({ value, vision }, color) => {
   const group = [];
-  for (let i = 0; i < groupSize; i++) {
-    const particle = genParticle(getRandomPos(), getRandomPos(), color);
+  for (let i = 0; i < value; i++) {
+    const particle = genParticle(getRandomPos(), getRandomPos(), color, vision);
     group.push(particle);
     particles.push(particle);
   }
@@ -57,7 +66,7 @@ const rule = (group1, group2, attraction) => {
       let dy = a.y - b.y;
       let d = Math.sqrt(dx * dx + dy * dy);
 
-      if (d > 0 && d < 80) {
+      if (d > 0 && d < a.vision) {
         let force = attraction / d;
         forcex += force * dx;
         forcey += force * dy;
@@ -95,21 +104,45 @@ green = [];
 pink = [];
 
 const createAllGroups = () => {
-  const { blueValue, redValue, greenValue, pinkValue } = getAllGroupsValues();
+  const { blueValues, redValues, greenValues, pinkValues } = getAllGroupsValues();
 
-  blue = createGroup(blueValue, 'blue');
-  red = createGroup(redValue, 'red');
-  green = createGroup(greenValue, 'green');
-  pink = createGroup(pinkValue, 'pink');
+  blue = createGroup(blueValues, 'blue');
+  red = createGroup(redValues, 'red');
+  green = createGroup(greenValues, 'green');
+  pink = createGroup(pinkValues, 'pink');
 }
 
 const getAllGroupsValues = () => {
   const blueValue = document.getElementById('amount-blue').value
-  const redValue = document.getElementById('amount-red').value
-  const greenValue = document.getElementById('amount-green').value
-  const pinkValue = document.getElementById('amount-pink').value
+  const blueVision = document.getElementById('blue-view').value;
 
-  return { blueValue, redValue, greenValue, pinkValue };
+  const redValue = document.getElementById('amount-red').value
+  const redVision = document.getElementById('red-view').value;
+
+  const greenValue = document.getElementById('amount-green').value
+  const greenVision = document.getElementById('green-view').value;
+
+  const pinkValue = document.getElementById('amount-pink').value
+  const pinkVision = document.getElementById('pink-view').value;
+
+  return {
+    blueValues: {
+      value: blueValue,
+      vision: +blueVision
+    },
+    redValues: {
+      value: redValue,
+      vision: +redVision
+    },
+    greenValues: {
+      value: greenValue,
+      vision: +greenVision
+    },
+    pinkValues: {
+      value: pinkValue,
+      vision: +pinkVision
+    }
+  };
 }
 
 createAllGroups();
@@ -161,14 +194,16 @@ const update = () => {
 update();
 
 function simulate() {
-  size = +document.getElementById('canvawidth').value
-  canvas.setAttribute('height', size + '');
-  canvas.setAttribute('width', size + '');
+  getCanvasSize()
 
   const inputs = document.querySelectorAll('input[type=range]');
   rulesGroup.clear();
   for (let input of inputs) {
     const id = input.id.split('-');
+
+    if (id.includes('view')) {
+      continue;
+    }
 
     const newRule = {
       from: id[0],
@@ -197,8 +232,13 @@ function reset() {
 
 function random() {
   document.querySelectorAll('input').forEach((input => {
-    if (input.type == 'range') {
+    if (input.type == 'range' && !input.id.includes('-view')) {
       input.value = Math.floor(Math.random() * 201) - 100;
+      input.nextElementSibling.innerHTML = input.value;
+    }
+
+    if (input.type == 'range' && input.id.includes('-view')) {
+      input.value = Math.floor(Math.random() * (size - 1)) + 1;
       input.nextElementSibling.innerHTML = input.value;
     }
 
@@ -243,10 +283,15 @@ document.getElementById('jsonFileInput').addEventListener('change', function (ev
       const keys = Object.keys(json);
       for (let key of keys) {
         if (key == 'groupQuantity') {
-          document.getElementById('amount-red').value = json[key].redValue
-          document.getElementById('amount-blue').value = json[key].blueValue
-          document.getElementById('amount-green').value = json[key].greenValue
-          document.getElementById('amount-pink').value = json[key].pinkValue
+          document.getElementById('amount-red').value = json[key].redValues.value
+          document.getElementById('amount-blue').value = json[key].blueValues.value
+          document.getElementById('amount-green').value = json[key].greenValues.value
+          document.getElementById('amount-pink').value = json[key].pinkValues.value
+
+          document.getElementById('red-view').value = json[key].redValues.vision
+          document.getElementById('blue-view').value = json[key].blueValues.vision
+          document.getElementById('green-view').value = json[key].greenValues.vision
+          document.getElementById('pink-view').value = json[key].pinkValues.vision
           continue;
         }
 
@@ -269,13 +314,13 @@ function promptGif() {
 }
 
 function exportGIF(duration = 10000, frameDelay = 50) {
-  animating = false; 
+  animating = false;
 
   document.getElementById('exporting').classList.remove('none');
   document.getElementById('controls').classList.add('none');
   document.title = 'exporting...';
 
-  simulate(); 
+  simulate();
 
   let frames = duration / frameDelay;
 
@@ -284,7 +329,7 @@ function exportGIF(duration = 10000, frameDelay = 50) {
     quality: 1,
     width: canvas.width,
     height: canvas.height,
-    workerScript: 'libs/gif.worker.js' 
+    workerScript: 'libs/gif.worker.js'
   });
 
   let currentFrame = 0;
@@ -328,3 +373,14 @@ function exportGIF(duration = 10000, frameDelay = 50) {
 
   captureNextFrame();
 }
+
+
+document.addEventListener('keyup', (e) => {
+  if (e.key == 'r') {
+    random();
+  }
+
+  if (e.code == 'Space' || e.code == 'Enter') {
+    simulate();
+  }
+})

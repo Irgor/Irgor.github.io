@@ -15,9 +15,20 @@
 
     <div id="controls" class="controls">
       <div class="inputs">
+        
         Red: <input value="400" type="number" min="0" max="600" id="amount-red">
+
         <br>
 
+        <div class="line-control">
+          <label for="red-red">Vision</label><input id="red-view" type="range" value="80" min="0" max="800"
+            oninput="this.nextElementSibling.value = this.value">
+          <output>80</output>
+        </div>
+
+        <br>
+
+        Attraction:
         <div class="line-control red">
           <label for="red-red">To Red</label><input id="red-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
@@ -44,8 +55,18 @@
 
         <br>
         Blue: <input value="400" type="number" min="0" max="600" id="amount-blue">
+
         <br>
 
+        <div class="line-control">
+          <label for="red-red">Vision</label><input id="blue-view" type="range" value="80" min="0" max="800"
+            oninput="this.nextElementSibling.value = this.value">
+          <output>80</output>
+        </div>
+
+        <br>
+
+        Attraction:
         <div class="line-control blue">
           <label for="blue-red">To Red</label><input id="blue-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
@@ -72,8 +93,18 @@
 
         <br>
         Green: <input value="400" type="number" min="0" max="600" id="amount-green">
+
         <br>
 
+        <div class="line-control">
+          <label for="red-red">Vision</label><input id="green-view" type="range" value="80" min="0" max="800"
+            oninput="this.nextElementSibling.value = this.value">
+          <output>80</output>
+        </div>
+
+        <br>
+
+        Attraction:
         <div class="line-control green">
           <label for="green-red">To Red</label><input id="green-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
@@ -100,8 +131,18 @@
 
         <br>
         Pink: <input value="400" type="number" min="0" max="600" id="amount-pink">
+
         <br>
 
+        <div class="line-control">
+          <label for="red-red">Vision</label><input id="pink-view" type="range" value="80" min="0" max="800"
+            oninput="this.nextElementSibling.value = this.value">
+          <output>80</output>
+        </div>
+
+        <br>
+
+        Attraction:
         <div class="line-control pink">
           <label for="pink-red">To Red</label><input id="pink-red" type="range" value="0" min="-100" max="100"
             oninput="this.nextElementSibling.value = this.value">
@@ -130,7 +171,7 @@
       <br>
       <br>
 
-      Size (px): <input type="number" placeholder="350" value="350" id="canvawidth">
+      Size (px): <input type="number" placeholder="800" value="800" id="canvawidth" onblur="getCanvasSize()">
 
       <br>
       <br>
@@ -144,21 +185,11 @@
       <br>
       <br>
 
-      Importar Configs
+      Import
       <input type="file" accept=".json" id="jsonFileInput">
-
-
-      <br>
-      <br>
 
       <button onclick="promptGif()">Export GIF</button>
 
-
-      <br>
-      <br>
-      <br>
-      <br>
-      <br>
       <br>
 
     </div>
