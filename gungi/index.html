@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gungi</title>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="board" id="board">
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+      <div class="line">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+      </div>
+    </div>
+
+    <div class="info">
+
+      <div class="turn-info">
+
+        <div class="turn-player-info">
+          <span>
+            Turn is:
+          </span>
+          <span id="cur-turn">
+            White
+          </span>
+        </div>
+
+        <div class="turn-phase-info">
+          <span>
+            Phase is:
+          </span>
+          <span id="cur-phase">
+            Draft
+          </span>
+        </div>
+
+      </div>
+
+      <div class="pieces">
+        <p>
+          White pieces:
+        </p>
+        <p>
+          On field: <span id="white-on-field">0</span>
+        </p>
+
+        <div class="conv-holder">
+          <div class="conv" id="white-conv">
+          </div>
+
+          <button class="ready disabled" id="white-ready">
+            Ready
+          </button>
+        </div>
+
+      </div>
+
+      <div class="pieces">
+        <p>
+          Black pieces:
+        </p>
+        <p>
+          On field: <span id="black-on-field">0</span>
+        </p>
+
+        <div class="conv-holder">
+          <div class="conv" id="black-conv">
+          </div>
+
+          <button class="ready disabled" id="black-ready">
+            Ready
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <style>
+    :root {
+      --rotate-x: 15deg;
+      --rotate-y: 10deg;
+      --tile-size: 70px;
+    }
+
+    @media screen and (max-width: 460px) {
+      :root {
+        --tile-size: 30px;
+      }
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100dvw;
+      height: 100dvh;
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-evenly;
+      flex-wrap: wrap;
+      background-color: beige;
+    }
+
+    .info {
+      border-left: 2px solid black;
+      width: 45%;
+      background: #fafafa;
+      font-size: 20px;
+    }
+
+    .board {
+      background-image: url('./assets/tile.png');
+      box-sizing: border-box;
+      width: calc(var(--tile-size) * 9);
+      height: calc(var(--tile-size) * 9);
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      perspective: 800px;
+      margin: auto;
+      transform: translateZ(0px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) scale(1);
+      filter: drop-shadow(4px 8px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .line {
+      box-sizing: border-box;
+      width: calc(var(--tile-size) * 9);
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
+    .square {
+      box-sizing: border-box;
+      width: var(--tile-size);
+      height: var(--tile-size);
+      border: 1px solid black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      will-change: transform;
+    }
+
+    .square svg {
+      width: calc(var(--tile-size) - 10px);
+      height: calc(var(--tile-size) - 10px);
+      left: 50%;
+      top: 50%;
+      cursor: pointer;
+      user-select: none;
+      position: absolute;
+      transform-style: preserve-3d;
+      filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.3));
+      image-rendering: optimizeSpeed;
+      image-rendering: crisp-edges;
+    }
+
+    .square svg:first-child {
+      left: 45%;
+      top: 55%;
+      transform: translateZ(0px) translate(-50%, -50%) rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) scale(1);
+    }
+
+    .square svg:nth-child(2) {
+      left: 51%;
+      top: 48%;
+      transform: translateZ(4px) translate(-50%, -50%) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+    }
+
+    .square svg:nth-child(3) {
+      left: 57%;
+      top: 41%;
+      transform: translateZ(8px) translate(-50%, -50%) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+    }
+
+    .square svg:only-child {
+      left: 48%;
+      top: 50%;
+      transform: translateZ(8px) translate(-50%, -50%) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+    }
+
+    .conv-holder {
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .conv-holder button {
+      height: max-content;
+      border: 2px solid black;
+      padding: 6px;
+      background-color: beige;
+      color:  black;
+      border-radius: 6px;
+      margin: auto;
+      margin-right: 0;
+      cursor: pointer;
+    }
+
+    .conv {
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .conv svg {
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .conv svg .tip {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: 100px;
+      height: 20px;
+      background: beige;
+      color: black;
+    }
+
+    .pieces,
+    .turn-info {
+      width: 88%;
+      background-color: #00000080;
+      border-radius: 8px;
+      border: 2px solid black;
+      margin: 0 auto;
+      color: white;
+      padding: 2%;
+
+      margin-bottom: 40px;
+      margin-top: 40px;
+    }
+
+    .pieces p {
+      margin: 0;
+      margin-bottom: 20px;
+    }
+
+    .selected-piece {
+      filter: drop-shadow(0 0 6px #ffd700) drop-shadow(0 0 12px #ffd700);
+      transition: filter 0.2s ease-in-out;
+    }
+
+    .blocked {
+      opacity: 0.2;
+      user-select: none;
+      touch-action: none;
+      pointer-events: none;
+      transition: all .4s;
+    }
+
+    .blocked svg {
+      cursor: not-allowed;
+    }
+
+    .piece-holder {
+      position: relative;
+    }
+
+    .tip {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -30px;
+      width: max-content;
+      height: max-content;
+      border: 1px solid black;
+      background: beige;
+      color: black;
+      border-radius: 6px;
+      padding: 4px;
+      z-index: 10;
+      font-size: 14px;
+      filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.3));
+      animation: popin .2s ease-in-out 1;
+    }
+
+    @keyframes popin {
+      0% {
+        opacity: 0;
+        top: -20px;
+      }
+
+      100% {
+        opacity: 1;
+        top: -30px;
+      }
+    }
+
+    .piece-layer {
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      will-change: transform;
+      transform: rotateX(5deg);
+    }
+
+    .piece-layer svg {
+      transform: none !important;
+    }
+
+    .square-available {
+      background-color: #00AAff40;
+    }
+
+    .square-unavailable {
+      user-select: none;
+      touch-action: none;
+      pointer-events: none;
+    }
+
+    div.piece-holder span.quantity {
+      width: 18px;
+      height: 18px;
+      background: beige;
+      color: black;
+      display: flex;
+      font-size: 14px;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid black;
+      box-sizing: border-box;
+      border-radius: 8px;
+      position: absolute;
+      top: -4px;
+    }
+
+    .piece-block {
+      opacity: 0.4;
+      user-select: none;
+      touch-action: none;
+      pointer-events: none;
+    }
+
+    .disabled {
+      opacity: 0.4;
+      user-select: none;
+      touch-action: none;
+      pointer-events: none;
+    }
+  </style>
+
+  <script src="./main.js"></script>
+</body>
+
+</html>
