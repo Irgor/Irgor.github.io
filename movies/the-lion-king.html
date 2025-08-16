@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Lion King</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .movie-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 5px;
+    }
+    .meta {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 15px;
+    }
+    .section h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #444;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .placeholder {
+      text-align: center;
+      color: #777;
+      font-style: italic;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="placeholder">No movie data provided.</div>
+
+  <script>
+    // Placeholder variable — replace this with your AI-generated JSON
+    let movieData = {
+  "title": "The Lion King",
+  "release_date": "1994-06-24",
+  "director": [
+    "Roger Allers",
+    "Rob Minkoff"
+  ],
+  "writers": [
+    "Irene Mecchi",
+    "Jonathan Roberts",
+    "Linda Woolverton"
+  ],
+  "cast": [
+    "Matthew Broderick",
+    "Jeremy Irons",
+    "James Earl Jones",
+    "Moira Kelly",
+    "Nathan Lane",
+    "Ernie Sabella",
+    "Robert Guillaume",
+    "Rowan Atkinson",
+    "Whoopi Goldberg",
+    "Cheech Marin",
+    "Jim Cummings",
+    "Jonathan Taylor Thomas",
+    "Niketa Calame",
+    "Madge Sinclair"
+  ],
+  "genre": [
+    "Animation",
+    "Adventure",
+    "Drama",
+    "Family",
+    "Musical"
+  ],
+  "plot_summary": "Lion cub Simba is next in line to rule the Pride Lands. However, his wicked uncle Scar plots to usurp the throne. After Scar orchestrates the death of Simba's father Mufasa and convinces Simba it was his fault, a guilt-ridden Simba flees into exile. He befriends the carefree duo Timon and Pumbaa. Years later, a grown-up Simba is called back to reclaim his rightful place as king from Scar.",
+  "runtime_minutes": 88,
+  "rating": "G",
+  "production_company": "Walt Disney Pictures",
+  "country": "USA",
+  "language": "English",
+  "box_office_worldwide": "$968.5 million"
+};
+
+    function createList(items) {
+      if (!items || items.length === 0) return "";
+      return "<ul>" + items.map(i => `<li>${i}</li>`).join("") + "</ul>";
+    }
+
+    function renderMovie(movie) {
+      return `
+        <div class="movie-card">
+          <h1>${movie.title}</h1>
+          <div class="meta">
+            Release Date: ${movie.release_date} • Runtime: ${movie.runtime_minutes} min • Rating: ${movie.rating}
+          </div>
+
+          <div class="section">
+            <h2>Plot Summary</h2>
+            <p>${movie.plot_summary}</p>
+          </div>
+
+          <div class="section">
+            <h2>Directors</h2>
+            ${createList(movie.director)}
+          </div>
+
+          <div class="section">
+            <h2>Writers</h2>
+            ${createList(movie.writers)}
+          </div>
+
+          <div class="section">
+            <h2>Cast</h2>
+            ${createList(movie.cast)}
+          </div>
+
+          <div class="section">
+            <h2>Genres</h2>
+            ${createList(movie.genre)}
+          </div>
+
+          <div class="section">
+            <h2>Production Info</h2>
+            <p><strong>Company:</strong> ${movie.production_company}</p>
+            <p><strong>Country:</strong> ${movie.country}</p>
+            <p><strong>Language:</strong> ${movie.language}</p>
+            <p><strong>Box Office:</strong> ${movie.box_office_worldwide}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateMovie(data) {
+      if (data) {
+        document.getElementById("app").classList.remove("placeholder");
+        document.getElementById("app").innerHTML = renderMovie(data);
+      }
+    }
+
+    // Example usage:
+    updateMovie(movieData);
+  </script>
+</body>
+</html>
