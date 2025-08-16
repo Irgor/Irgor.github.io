@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Movie Details</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .movie-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 5px;
+    }
+    .meta {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 15px;
+    }
+    .section h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #444;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .placeholder {
+      text-align: center;
+      color: #777;
+      font-style: italic;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="placeholder">No movie data provided.</div>
+
+  <script>
+    // Placeholder variable — replace this with your AI-generated JSON
+    let movieData = {
+  "title": "Minecraft",
+  "release_date": "2025-04-04",
+  "director": [
+    "Jared Hess"
+  ],
+  "writers": [
+    "Chris Bowman",
+    "Hubbel Palmer",
+    "Jared Hess"
+  ],
+  "cast": [
+    "Jason Momoa",
+    "Jack Black",
+    "Danielle Brooks",
+    "Emma Myers",
+    "Sebastian Eugene Hansen",
+    "Jennifer Coolidge",
+    "Jemaine Clement",
+    "Kate McKinnon",
+    "Wendi McLendon-Covey",
+    "Owen Vaccaro",
+    "Matt Berry"
+  ],
+  "genre": [
+    "Adventure",
+    "Family",
+    "Fantasy",
+    "Comedy"
+  ],
+  "plot_summary": "An unlikely group of adventurers is tasked with saving the Overworld from the malevolent Ender Dragon.",
+  "runtime_minutes": 0,
+  "rating": "Not Rated Yet",
+  "production_company": "Warner Bros. Pictures",
+  "country": "United States",
+  "language": "English",
+  "box_office_worldwide": "Not Released Yet"
+};
+
+    function createList(items) {
+      if (!items || items.length === 0) return "";
+      return "<ul>" + items.map(i => `<li>${i}</li>`).join("") + "</ul>";
+    }
+
+    function renderMovie(movie) {
+      return `
+        <div class="movie-card">
+          <h1>${movie.title}</h1>
+          <div class="meta">
+            Release Date: ${movie.release_date} • Runtime: ${movie.runtime_minutes} min • Rating: ${movie.rating}
+          </div>
+
+          <div class="section">
+            <h2>Plot Summary</h2>
+            <p>${movie.plot_summary}</p>
+          </div>
+
+          <div class="section">
+            <h2>Directors</h2>
+            ${createList(movie.director)}
+          </div>
+
+          <div class="section">
+            <h2>Writers</h2>
+            ${createList(movie.writers)}
+          </div>
+
+          <div class="section">
+            <h2>Cast</h2>
+            ${createList(movie.cast)}
+          </div>
+
+          <div class="section">
+            <h2>Genres</h2>
+            ${createList(movie.genre)}
+          </div>
+
+          <div class="section">
+            <h2>Production Info</h2>
+            <p><strong>Company:</strong> ${movie.production_company}</p>
+            <p><strong>Country:</strong> ${movie.country}</p>
+            <p><strong>Language:</strong> ${movie.language}</p>
+            <p><strong>Box Office:</strong> ${movie.box_office_worldwide}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateMovie(data) {
+      if (data) {
+        document.getElementById("app").classList.remove("placeholder");
+        document.getElementById("app").innerHTML = renderMovie(data);
+      }
+    }
+
+    // Example usage:
+    updateMovie(movieData);
+  </script>
+</body>
+</html>
