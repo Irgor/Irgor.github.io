@@ -8,8 +8,16 @@
 </head>
 
 <body>
+    <a href="./mapa.svg" download="mapa.svg" class="download-btn">
+        Baixar Mapa
+    </a>
     <img src="./mapa.svg">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             display: flex;
             width: 100%;
@@ -23,11 +31,17 @@
             width: auto;
         }
 
+        a {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+        }
+
         @media screen and (max-width: 460px) {
             img {
                 margin: auto;
                 height: auto;
-                width: 94dvw;
+                width: 84dvw;
             }
         }
     </style>
