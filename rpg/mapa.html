@@ -1,50 +1,547 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body { width: 100%; height: 100dvh; overflow: hidden; background: #fff; }
+
+    #viewer{
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;           /* a gente controla pan/pinch */
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #viewer svg{
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Botão de download */
+    .download-btn{
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 20;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 10px 12px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #111;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Controles de zoom (colapsáveis) */
+    .controls{
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 20;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 14px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      width: min(360px, calc(100vw - 32px));
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      backdrop-filter: blur(8px);
+      transition: padding 160ms ease, width 160ms ease;
+    }
+
+    .row{
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .header{
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .title{
+      font-weight: 700;
+      color: #111;
+      white-space: nowrap;
+    }
+
+    button{
+      border: 1px solid rgba(0,0,0,0.10);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #111;
+    }
+    button:active { transform: translateY(1px); }
+
+    input[type="range"]{ width: 100%; }
+
+    .zoomLabel{
+      min-width: 90px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: #111;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .hint{
+      font-size: 12px;
+      opacity: 0.72;
+      line-height: 1.25;
+    }
+
+    /* Estado colapsado */
+    .controls.collapsed{
+      width: auto;
+      padding: 8px;
+    }
+
+    .controls.collapsed .hide-when-collapsed{
+      display: none;
+    }
+
+    .controls.collapsed .title,
+    .controls.collapsed .zoomLabel{
+      display: none;
+    }
+
+    #toggleControls{
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+  </style>
 </head>
 
 <body>
-    <a href="./mapa.svg" download="mapa.svg" class="download-btn">
-        Baixar Mapa
-    </a>
-    <img src="./mapa.svg">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
+  <a href="./mapa.svg" download="mapa.svg" class="download-btn">Baixar Mapa</a>
+
+  <div class="controls" id="controls">
+    <div class="row header">
+      <button id="toggleControls" title="Ocultar/mostrar controles" aria-label="Ocultar/mostrar controles">◀</button>
+      <div class="title">Controles</div>
+      <div class="zoomLabel" id="zoomLabel">Zoom 100%</div>
+    </div>
+
+    <div class="row hide-when-collapsed">
+      <button id="zoomOut" title="Afastar (diminuir zoom)">−</button>
+      <button id="zoomIn" title="Aproximar (aumentar zoom)">+</button>
+      <button id="reset" title="Reiniciar visão">Reiniciar</button>
+      <button id="fit" title="Ajustar à tela">Ajustar</button>
+    </div>
+
+    <div class="row hide-when-collapsed">
+      <input id="zoomSlider" type="range" min="0" max="1000" value="500" aria-label="Controle de zoom" />
+    </div>
+
+    <div class="hint hide-when-collapsed">
+      Arraste para mover • Roda do mouse / pinça para zoom • Duplo clique para zoom • Pressione <b>0</b> para reiniciar • <b>C</b> para ocultar/mostrar controles
+    </div>
+  </div>
+
+  <div id="viewer"></div>
+
+  <script>
+    const viewer = document.getElementById("viewer");
+    const controls = document.getElementById("controls");
+
+    const toggleBtn = document.getElementById("toggleControls");
+    const zoomInBtn = document.getElementById("zoomIn");
+    const zoomOutBtn = document.getElementById("zoomOut");
+    const resetBtn = document.getElementById("reset");
+    const fitBtn = document.getElementById("fit");
+    const zoomSlider = document.getElementById("zoomSlider");
+    const zoomLabel = document.getElementById("zoomLabel");
+
+    let svgEl = null;
+
+    // Câmera (viewBox atual suaviza em direção ao viewBox alvo)
+    let vb0 = null;         // viewBox inicial
+    let current = null;     // o que renderiza
+    let target = null;      // o que as interações setam
+
+    // Ajuste fino de “fluidez”
+    const EASE = 0.18;      // maior = mais “rápido”, menor = mais “flutuante”
+    const STOP_EPS = 1e-6;
+
+    // Limites de zoom (relativos ao vb0)
+    const MAX_ZOOM_IN = 60;       // quão perto pode chegar
+    const MAX_ZOOM_OUT = 3;       // quanto pode afastar
+
+    // Inércia
+    let inertia = { vx: 0, vy: 0, active: false };
+    const FRICTION = 0.92;        // mais perto de 1 = desliza mais tempo
+    const MIN_V = 0.0005;         // threshold (unidades SVG / ms)
+
+    // Estado de ponteiros
+    const pointers = new Map();
+    let dragStart = null;   // { vbStart, svgStartPoint, lastSvg, lastT }
+    let pinchStart = null;  // { vbStart, dist, midSvg }
+
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+    function setViewBox(vb) {
+      current = vb;
+      svgEl.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+    }
+
+    function setTarget(vb) {
+      target = vb;
+    }
+
+    function copyVB(vb) {
+      return { x: vb.x, y: vb.y, w: vb.w, h: vb.h };
+    }
+
+    function initViewBoxFromSvg(svg) {
+      const vbAttr = svg.getAttribute("viewBox");
+      if (vbAttr) {
+        const parts = vbAttr.trim().split(/\s+|,/).map(Number);
+        if (parts.length === 4 && parts.every(n => Number.isFinite(n))) {
+          return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+        }
+      }
+
+      const wAttr = parseFloat(svg.getAttribute("width"));
+      const hAttr = parseFloat(svg.getAttribute("height"));
+      if (Number.isFinite(wAttr) && Number.isFinite(hAttr)) {
+        return { x: 0, y: 0, w: wAttr, h: hAttr };
+      }
+
+      const bbox = svg.getBBox();
+      return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
+    }
+
+    function screenToSvg(clientX, clientY) {
+      const pt = svgEl.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      const ctm = svgEl.getScreenCTM();
+      if (!ctm) return { x: 0, y: 0 };
+      const p = pt.matrixTransform(ctm.inverse());
+      return { x: p.x, y: p.y };
+    }
+
+    function zoomAt(clientX, clientY, zoomFactor) {
+      // zoomFactor > 1 => aproxima (viewBox menor)
+      const p = screenToSvg(clientX, clientY);
+
+      const zoomNow = vb0.w / target.w;
+      const zoomNext = clamp(zoomNow * zoomFactor, 1 / MAX_ZOOM_OUT, MAX_ZOOM_IN);
+
+      const nextW = vb0.w / zoomNext;
+      const nextH = vb0.h / zoomNext;
+
+      // manter o ponto sob o cursor estável
+      const rx = (p.x - target.x) / target.w;
+      const ry = (p.y - target.y) / target.h;
+
+      setTarget({
+        w: nextW,
+        h: nextH,
+        x: p.x - rx * nextW,
+        y: p.y - ry * nextH
+      });
+
+      inertia.active = false;
+      syncUIFromTarget();
+    }
+
+    function resetView() {
+      setTarget(copyVB(vb0));
+      inertia.active = false;
+      syncUIFromTarget();
+    }
+
+    function fitToScreen() {
+      // “Ajustar” aqui = voltar ao viewBox original (a escala já é feita pelo CSS do SVG)
+      setTarget(copyVB(vb0));
+      inertia.active = false;
+      syncUIFromTarget();
+    }
+
+    // --- Slider (escala log) ---
+    function zoomToSliderValue(zoom) {
+      const minZ = 1 / MAX_ZOOM_OUT;
+      const maxZ = MAX_ZOOM_IN;
+      const t = (Math.log(zoom) - Math.log(minZ)) / (Math.log(maxZ) - Math.log(minZ));
+      return clamp(Math.round(t * 1000), 0, 1000);
+    }
+
+    function sliderValueToZoom(val) {
+      const minZ = 1 / MAX_ZOOM_OUT;
+      const maxZ = MAX_ZOOM_IN;
+      const t = clamp(val / 1000, 0, 1);
+      return Math.exp(Math.log(minZ) + t * (Math.log(maxZ) - Math.log(minZ)));
+    }
+
+    function syncUIFromTarget() {
+      const zoom = vb0.w / target.w;
+      zoomLabel.textContent = `Zoom ${Math.round(zoom * 100)}%`;
+      zoomSlider.value = String(zoomToSliderValue(zoom));
+    }
+
+    // --- Animação: suavização + inércia ---
+    let lastFrameT = performance.now();
+
+    function animate(now) {
+      const dt = Math.max(0.5, Math.min(50, now - lastFrameT));
+      lastFrameT = now;
+
+      if (svgEl && current && target) {
+        // Inércia move o TARGET; câmera suaviza até ele
+        if (inertia.active) {
+          target.x += inertia.vx * dt;
+          target.y += inertia.vy * dt;
+
+          inertia.vx *= Math.pow(FRICTION, dt / 16);
+          inertia.vy *= Math.pow(FRICTION, dt / 16);
+
+          if (Math.abs(inertia.vx) < MIN_V && Math.abs(inertia.vy) < MIN_V) {
+            inertia.active = false;
+          }
         }
 
-        body {
-            display: flex;
-            width: 100%;
-            height: 100dvh;
-            overflow: hidden;
-        }
+        const nx = current.x + (target.x - current.x) * EASE;
+        const ny = current.y + (target.y - current.y) * EASE;
+        const nw = current.w + (target.w - current.w) * EASE;
+        const nh = current.h + (target.h - current.h) * EASE;
 
-        img {
-            margin: auto;
-            height: 94dvh;
-            width: auto;
-        }
+        const close =
+          Math.abs(nx - target.x) < STOP_EPS &&
+          Math.abs(ny - target.y) < STOP_EPS &&
+          Math.abs(nw - target.w) < STOP_EPS &&
+          Math.abs(nh - target.h) < STOP_EPS;
 
-        a {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-        }
+        setViewBox(close ? copyVB(target) : { x: nx, y: ny, w: nw, h: nh });
+      }
 
-        @media screen and (max-width: 460px) {
-            img {
-                margin: auto;
-                height: auto;
-                width: 84dvw;
-            }
-        }
-    </style>
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // --- Eventos ---
+    viewer.addEventListener("wheel", (e) => {
+      if (!svgEl) return;
+      e.preventDefault();
+      const factor = Math.exp(-e.deltaY * 0.002);
+      zoomAt(e.clientX, e.clientY, factor);
+    }, { passive: false });
+
+    viewer.addEventListener("dblclick", (e) => {
+      if (!svgEl) return;
+      zoomAt(e.clientX, e.clientY, e.shiftKey ? 1/1.6 : 1.6);
+    });
+
+    viewer.addEventListener("pointerdown", (e) => {
+      if (!svgEl) return;
+      viewer.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      inertia.active = false;
+
+      if (pointers.size === 1) {
+        const p0 = screenToSvg(e.clientX, e.clientY);
+        dragStart = {
+          vbStart: copyVB(target),
+          svgStartPoint: p0,
+          lastSvg: p0,
+          lastT: performance.now()
+        };
+      } else if (pointers.size === 2) {
+        const pts = [...pointers.values()];
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const midClient = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+        const midSvg = screenToSvg(midClient.x, midClient.y);
+
+        pinchStart = { vbStart: copyVB(target), dist, midSvg };
+        dragStart = null;
+      }
+    });
+
+    viewer.addEventListener("pointermove", (e) => {
+      if (!svgEl) return;
+      if (!pointers.has(e.pointerId)) return;
+
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Pan
+      if (pointers.size === 1 && dragStart) {
+        const pNow = screenToSvg(e.clientX, e.clientY);
+
+        const dx = dragStart.svgStartPoint.x - pNow.x;
+        const dy = dragStart.svgStartPoint.y - pNow.y;
+
+        setTarget({
+          x: dragStart.vbStart.x + dx,
+          y: dragStart.vbStart.y + dy,
+          w: dragStart.vbStart.w,
+          h: dragStart.vbStart.h
+        });
+
+        // Velocidade para inércia
+        const tNow = performance.now();
+        const dt = Math.max(1, tNow - dragStart.lastT);
+        inertia.vx = (dragStart.lastSvg.x - pNow.x) / dt;
+        inertia.vy = (dragStart.lastSvg.y - pNow.y) / dt;
+        dragStart.lastSvg = pNow;
+        dragStart.lastT = tNow;
+
+        return;
+      }
+
+      // Pinch zoom
+      if (pointers.size === 2 && pinchStart) {
+        const pts = [...pointers.values()];
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const zoomFactor = dist / pinchStart.dist; // >1 => aproxima
+        const base = pinchStart.vbStart;
+
+        const zoomBase = vb0.w / base.w;
+        const zoomNext = clamp(zoomBase * zoomFactor, 1 / MAX_ZOOM_OUT, MAX_ZOOM_IN);
+
+        const nextW = vb0.w / zoomNext;
+        const nextH = vb0.h / zoomNext;
+
+        const rx = (pinchStart.midSvg.x - base.x) / base.w;
+        const ry = (pinchStart.midSvg.y - base.y) / base.h;
+
+        setTarget({
+          w: nextW,
+          h: nextH,
+          x: pinchStart.midSvg.x - rx * nextW,
+          y: pinchStart.midSvg.y - ry * nextH
+        });
+
+        inertia.active = false;
+        syncUIFromTarget();
+      }
+    });
+
+    function endPointer(e) {
+      pointers.delete(e.pointerId);
+
+      if (pointers.size === 0) {
+        const speed = Math.hypot(inertia.vx, inertia.vy);
+        inertia.active = speed >= MIN_V;
+
+        dragStart = null;
+        pinchStart = null;
+      } else if (pointers.size === 1) {
+        pinchStart = null;
+        inertia.active = false;
+
+        const only = [...pointers.values()][0];
+        const p0 = screenToSvg(only.x, only.y);
+        dragStart = {
+          vbStart: copyVB(target),
+          svgStartPoint: p0,
+          lastSvg: p0,
+          lastT: performance.now()
+        };
+      }
+    }
+    viewer.addEventListener("pointerup", endPointer);
+    viewer.addEventListener("pointercancel", endPointer);
+
+    // Botões
+    zoomInBtn.addEventListener("click", () => {
+      if (!svgEl) return;
+      const r = viewer.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1.35);
+    });
+    zoomOutBtn.addEventListener("click", () => {
+      if (!svgEl) return;
+      const r = viewer.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1/1.35);
+    });
+    resetBtn.addEventListener("click", resetView);
+    fitBtn.addEventListener("click", fitToScreen);
+
+    // Slider (zoom no centro)
+    zoomSlider.addEventListener("input", () => {
+      if (!svgEl) return;
+      const desiredZoom = sliderValueToZoom(Number(zoomSlider.value));
+      const currentZoom = vb0.w / target.w;
+      const factor = desiredZoom / currentZoom;
+
+      const r = viewer.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, factor);
+    });
+
+    // Colapsar/expandir
+    function setCollapsed(collapsed) {
+      controls.classList.toggle("collapsed", collapsed);
+      toggleBtn.textContent = collapsed ? "▶" : "◀";
+      toggleBtn.title = collapsed ? "Mostrar controles" : "Ocultar controles";
+      toggleBtn.setAttribute("aria-label", toggleBtn.title);
+      try { localStorage.setItem("mapa_controlsCollapsed", String(collapsed)); } catch {}
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      setCollapsed(!controls.classList.contains("collapsed"));
+    });
+
+    // Teclas: 0 reseta / C colapsa
+    window.addEventListener("keydown", (e) => {
+      if (!svgEl) return;
+      if (e.key === "0") resetView();
+      if (e.key.toLowerCase() === "c") setCollapsed(!controls.classList.contains("collapsed"));
+    });
+
+    async function loadInlineSvg(url) {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Falha ao carregar o SVG: ${res.status}`);
+
+      const text = await res.text();
+      viewer.innerHTML = text;
+
+      svgEl = viewer.querySelector("svg");
+      if (!svgEl) throw new Error("Nenhuma tag <svg> foi encontrada no arquivo.");
+
+      if (!svgEl.getAttribute("preserveAspectRatio")) {
+        svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      }
+
+      vb0 = initViewBoxFromSvg(svgEl);
+      target = copyVB(vb0);
+      current = copyVB(vb0);
+      setViewBox(copyVB(vb0));
+      syncUIFromTarget();
+
+      // restaurar estado do painel (chave separada do outros arquivos)
+      let saved = null;
+      try { saved = localStorage.getItem("mapa_controlsCollapsed"); } catch {}
+      setCollapsed(saved === "true");
+    }
+
+    loadInlineSvg("./mapa.svg").catch(err => {
+      viewer.innerHTML = `<pre style="padding:16px;font-family:monospace;">${err.message}</pre>`;
+      console.error(err);
+    });
+  </script>
 </body>
-
 </html>
