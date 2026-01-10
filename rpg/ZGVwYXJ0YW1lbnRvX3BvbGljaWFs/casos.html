@@ -1,50 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casos</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Casos</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* Fullscreen viewer that captures gestures */
+    #viewer {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;          /* key for pinch/drag handling */
+      overscroll-behavior: none;
+    }
+
+    /* The SVG image we transform */
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+      user-select: none;
+      -webkit-user-drag: none;
+
+      /* keep your sizing intent */
+      height: 94dvh;
+      width: auto;
+    }
+
+    a {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+
+    @media screen and (max-width: 460px) {
+      #map {
+        height: auto;
+        width: 84dvw;
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <a href="./casos.svg" download="casos.svg" class="download-btn">
-        Baixar Casos
-    </a>
-    <img src="./casos.svg">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
+  <a href="./casos.svg" download="casos.svg" class="download-btn">Baixar Casos</a>
 
-        body {
-            display: flex;
-            width: 100%;
-            height: 100dvh;
-            overflow: hidden;
-        }
+  <div id="viewer">
+    <img id="map" src="./casos.svg" alt="Casos" />
+  </div>
 
-        img {
-            margin: auto;
-            height: 94dvh;
-            width: auto;
-        }
+  <script>
+    const viewer = document.getElementById("viewer");
+    const img = document.getElementById("map");
 
-        a {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-        }
+    let scale = 1;
+    let translate = { x: 0, y: 0 };
+    const minScale = 0.5;
+    const maxScale = 40;
 
-        @media screen and (max-width: 460px) {
-            img {
-                margin: auto;
-                height: auto;
-                width: 84dvw;
-            }
-        }
-    </style>
+    const pointers = new Map();
+    let lastPanPoint = null;
+
+    let pinchStart = null;
+
+    function clamp(v, min, max) {
+      return Math.min(max, Math.max(min, v));
+    }
+
+    function applyTransform() {
+      img.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+    }
+
+    function viewerPointFromEvent(e) {
+      const r = viewer.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function centerImage() {
+      // Temporarily reset transform so we can measure the base (CSS) size
+      img.style.transform = "translate(0px, 0px) scale(1)";
+      const v = viewer.getBoundingClientRect();
+      const b = img.getBoundingClientRect();
+
+      scale = 1;
+      translate.x = (v.width - b.width) / 2;
+      translate.y = (v.height - b.height) / 2;
+
+      applyTransform();
+    }
+
+    function zoomAt(point, zoomFactor) {
+      const nextScale = clamp(scale * zoomFactor, minScale, maxScale);
+
+      // Keep the pixel under the cursor/fingers stable:
+      // local = (point - translate) / scale
+      const localX = (point.x - translate.x) / scale;
+      const localY = (point.y - translate.y) / scale;
+
+      translate.x = point.x - localX * nextScale;
+      translate.y = point.y - localY * nextScale;
+      scale = nextScale;
+
+      applyTransform();
+    }
+
+    // Initial center once the SVG is laid out
+    img.addEventListener("load", centerImage);
+    window.addEventListener("resize", centerImage);
+
+    // Wheel zoom (desktop)
+    viewer.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const p = viewerPointFromEvent(e);
+      const zoomFactor = Math.exp(-e.deltaY * 0.002); // smooth zoom
+      zoomAt(p, zoomFactor);
+    }, { passive: false });
+
+    // Pointer-based pan + pinch (mobile + modern desktop)
+    viewer.addEventListener("pointerdown", (e) => {
+      viewer.setPointerCapture(e.pointerId);
+      const p = viewerPointFromEvent(e);
+      pointers.set(e.pointerId, p);
+
+      if (pointers.size === 1) {
+        lastPanPoint = p;
+      } else if (pointers.size === 2) {
+        const [p1, p2] = [...pointers.values()];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        pinchStart = {
+          dist: Math.hypot(dx, dy),
+          scale,
+          translate: { ...translate },
+          mid: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
+        };
+      }
+    });
+
+    viewer.addEventListener("pointermove", (e) => {
+      if (!pointers.has(e.pointerId)) return;
+
+      const p = viewerPointFromEvent(e);
+      pointers.set(e.pointerId, p);
+
+      if (pointers.size === 1 && lastPanPoint) {
+        const dx = p.x - lastPanPoint.x;
+        const dy = p.y - lastPanPoint.y;
+        translate.x += dx;
+        translate.y += dy;
+        lastPanPoint = p;
+        applyTransform();
+        return;
+      }
+
+      if (pointers.size === 2 && pinchStart) {
+        const [p1, p2] = [...pointers.values()];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const dist = Math.hypot(dx, dy);
+        const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
+        const zoomFactor = dist / pinchStart.dist;
+        const nextScale = clamp(pinchStart.scale * zoomFactor, minScale, maxScale);
+
+        // Zoom around the *starting* midpoint in viewer coordinates
+        const localX = (pinchStart.mid.x - pinchStart.translate.x) / pinchStart.scale;
+        const localY = (pinchStart.mid.y - pinchStart.translate.y) / pinchStart.scale;
+
+        // Allow midpoint to drift naturally by using current mid for translate anchoring
+        translate.x = mid.x - localX * nextScale;
+        translate.y = mid.y - localY * nextScale;
+        scale = nextScale;
+
+        applyTransform();
+      }
+    });
+
+    function endPointer(e) {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinchStart = null;
+      if (pointers.size === 1) lastPanPoint = [...pointers.values()][0] ?? null;
+      if (pointers.size === 0) lastPanPoint = null;
+    }
+
+    viewer.addEventListener("pointerup", endPointer);
+    viewer.addEventListener("pointercancel", endPointer);
+
+    // Double click/tap to zoom in; Shift + double click to zoom out
+    viewer.addEventListener("dblclick", (e) => {
+      const p = viewerPointFromEvent(e);
+      zoomAt(p, e.shiftKey ? 0.5 : 2);
+    });
+
+    // Press 0 to reset/center
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "0") centerImage();
+    });
+  </script>
 </body>
-
 </html>
