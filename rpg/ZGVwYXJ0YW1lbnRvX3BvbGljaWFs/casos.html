@@ -6,66 +6,184 @@
   <title>Casos</title>
   <style>
     * { margin: 0; padding: 0; }
-    body {
-      width: 100%;
-      height: 100dvh;
-      overflow: hidden;
-    }
+    body { width: 100%; height: 100dvh; overflow: hidden; background: #fff; }
 
-    a {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 10;
-      background: rgba(255,255,255,0.85);
-      padding: 10px 12px;
-      border-radius: 10px;
-      text-decoration: none;
-      color: #000;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
-    #viewer {
+    #viewer{
       width: 100%;
       height: 100%;
       overflow: hidden;
-      touch-action: none; /* important: allow us to handle pinch/drag */
+      touch-action: none;           /* we handle pan/pinch */
       overscroll-behavior: none;
-      background: #fff;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    /* Inline SVG should fill the viewer */
-    #viewer svg {
+    #viewer svg{
       width: 100%;
       height: 100%;
       display: block;
+    }
+
+    /* Download button */
+    .download-btn{
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 20;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 10px 12px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #111;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Zoom controls */
+    .controls{
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 20;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 14px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      width: min(320px, calc(100vw - 32px));
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      backdrop-filter: blur(8px);
+    }
+
+    .row{
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button{
+      border: 1px solid rgba(0,0,0,0.10);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #111;
+    }
+    button:active { transform: translateY(1px); }
+
+    input[type="range"]{
+      width: 100%;
+    }
+
+    .zoomLabel{
+      min-width: 70px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: #111;
+      font-weight: 600;
+    }
+    .hint{
+      font-size: 12px;
+      opacity: 0.7;
+      line-height: 1.2;
     }
   </style>
 </head>
 
 <body>
-  <a href="./casos.svg" download="casos.svg">Baixar Casos</a>
+  <a href="./casos.svg" download="casos.svg" class="download-btn">Baixar Casos</a>
+
+  <div class="controls">
+    <div class="row">
+      <button id="zoomOut" title="Zoom out">−</button>
+      <button id="zoomIn" title="Zoom in">+</button>
+      <button id="reset" title="Reset view">Reset</button>
+      <button id="fit" title="Fit to screen">Fit</button>
+      <div class="zoomLabel" id="zoomLabel">100%</div>
+    </div>
+    <div class="row">
+      <input id="zoomSlider" type="range" min="0" max="1000" value="500" />
+    </div>
+    <div class="hint">
+      Drag to pan • Wheel / pinch to zoom • Double click to zoom • Press <b>0</b> to reset
+    </div>
+  </div>
+
   <div id="viewer"></div>
 
   <script>
     const viewer = document.getElementById("viewer");
 
+    const zoomInBtn = document.getElementById("zoomIn");
+    const zoomOutBtn = document.getElementById("zoomOut");
+    const resetBtn = document.getElementById("reset");
+    const fitBtn = document.getElementById("fit");
+    const zoomSlider = document.getElementById("zoomSlider");
+    const zoomLabel = document.getElementById("zoomLabel");
+
     let svgEl = null;
-    let vb = null;          // current viewBox: {x,y,w,h}
-    let vb0 = null;         // initial viewBox for clamping
+
+    // Camera (current viewBox eases toward target viewBox)
+    let vb0 = null;         // "native" starting viewBox
+    let current = null;     // what we render
+    let target = null;      // what interactions set
+
+    // Tweak these for "fluid"
+    const EASE = 0.18;      // higher = snappier, lower = smoother
+    const STOP_EPS = 1e-6;
+
+    // Zoom limits (relative to vb0)
+    const MAX_ZOOM_IN = 60;       // deep zoom (vb0.w / current.w)
+    const MAX_ZOOM_OUT = 3;       // zoom out (current.w / vb0.w)
+
+    // Inertia
+    let inertia = { vx: 0, vy: 0, active: false };
+    const FRICTION = 0.92;        // closer to 1 = longer glide
+    const MIN_V = 0.0005;         // stop threshold (SVG units/ms)
+
+    // Pointer state
     const pointers = new Map();
-    let dragStart = null;   // { vbStart, svgStartPoint }
+    let dragStart = null;   // { vbStart, svgStartPoint, t, lastSvg, lastT }
     let pinchStart = null;  // { vbStart, dist, midSvg }
 
     const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 
-    function setViewBox(next) {
-      vb = next;
+    function setViewBox(vb) {
+      current = vb;
       svgEl.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
     }
 
+    function setTarget(vb) {
+      target = vb;
+    }
+
+    function copyVB(vb) {
+      return { x: vb.x, y: vb.y, w: vb.w, h: vb.h };
+    }
+
+    function initViewBoxFromSvg(svg) {
+      const vbAttr = svg.getAttribute("viewBox");
+      if (vbAttr) {
+        const parts = vbAttr.trim().split(/\s+|,/).map(Number);
+        if (parts.length === 4 && parts.every(n => Number.isFinite(n))) {
+          return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+        }
+      }
+
+      const wAttr = parseFloat(svg.getAttribute("width"));
+      const hAttr = parseFloat(svg.getAttribute("height"));
+      if (Number.isFinite(wAttr) && Number.isFinite(hAttr)) {
+        return { x: 0, y: 0, w: wAttr, h: hAttr };
+      }
+
+      const bbox = svg.getBBox();
+      return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
+    }
+
     function screenToSvg(clientX, clientY) {
-      // Convert screen coords to SVG coords (respects current viewBox)
       const pt = svgEl.createSVGPoint();
       pt.x = clientX;
       pt.y = clientY;
@@ -76,50 +194,268 @@
     }
 
     function zoomAt(clientX, clientY, zoomFactor) {
-      // zoomFactor > 1 zooms in, < 1 zooms out
+      // zoomFactor > 1 => zoom in (smaller viewBox)
       const p = screenToSvg(clientX, clientY);
 
-      const nextW = vb.w / zoomFactor;
-      const nextH = vb.h / zoomFactor;
+      const zoomNow = vb0.w / target.w;
+      const zoomNext = clamp(zoomNow * zoomFactor, 1 / MAX_ZOOM_OUT, MAX_ZOOM_IN);
 
-      // clamp zoom range relative to initial viewBox
-      const minW = vb0.w / 60;   // allow deep zoom in (adjust to taste)
-      const maxW = vb0.w * 3;    // allow zoom out a bit
-      const w = clamp(nextW, minW, maxW);
-      const h = clamp(nextH, (vb0.h / vb0.w) * minW, (vb0.h / vb0.w) * maxW);
+      const nextW = vb0.w / zoomNext;
+      const nextH = vb0.h / zoomNext;
 
-      // keep cursor point stable: compute its relative position in viewBox
-      const rx = (p.x - vb.x) / vb.w;
-      const ry = (p.y - vb.y) / vb.h;
+      // keep point stable
+      const rx = (p.x - target.x) / target.w;
+      const ry = (p.y - target.y) / target.h;
 
-      const next = {
-        w,
-        h,
-        x: p.x - rx * w,
-        y: p.y - ry * h
-      };
+      setTarget({
+        w: nextW,
+        h: nextH,
+        x: p.x - rx * nextW,
+        y: p.y - ry * nextH
+      });
 
-      setViewBox(next);
+      inertia.active = false; // stop glide on explicit zoom
+      syncUIFromTarget();
     }
 
-    function initViewBoxFromSvg(svg) {
-      // Prefer existing viewBox; fallback to width/height or bbox
-      const vbAttr = svg.getAttribute("viewBox");
-      if (vbAttr) {
-        const [x, y, w, h] = vbAttr.trim().split(/\s+|,/).map(Number);
-        if ([x,y,w,h].every(n => Number.isFinite(n))) return { x, y, w, h };
-      }
-
-      const wAttr = parseFloat(svg.getAttribute("width"));
-      const hAttr = parseFloat(svg.getAttribute("height"));
-      if (Number.isFinite(wAttr) && Number.isFinite(hAttr)) {
-        return { x: 0, y: 0, w: wAttr, h: hAttr };
-      }
-
-      // bbox fallback (can be slower on huge SVGs, but works)
-      const bbox = svg.getBBox();
-      return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
+    function fitToScreen() {
+      // "Fit" here just means reset to vb0 (since SVG is already scaled to viewer)
+      // If you want a different fit mode, tell me your desired behavior.
+      setTarget(copyVB(vb0));
+      inertia.active = false;
+      syncUIFromTarget();
     }
+
+    function resetView() {
+      setTarget(copyVB(vb0));
+      inertia.active = false;
+      syncUIFromTarget();
+    }
+
+    // --- Slider mapping (log-ish) ---
+    function zoomToSliderValue(zoom) {
+      // map zoom in [minZoom, maxZoom] to [0..1000] using log scale
+      const minZ = 1 / MAX_ZOOM_OUT;
+      const maxZ = MAX_ZOOM_IN;
+      const t = (Math.log(zoom) - Math.log(minZ)) / (Math.log(maxZ) - Math.log(minZ));
+      return clamp(Math.round(t * 1000), 0, 1000);
+    }
+
+    function sliderValueToZoom(val) {
+      const minZ = 1 / MAX_ZOOM_OUT;
+      const maxZ = MAX_ZOOM_IN;
+      const t = clamp(val / 1000, 0, 1);
+      return Math.exp(Math.log(minZ) + t * (Math.log(maxZ) - Math.log(minZ)));
+    }
+
+    function syncUIFromTarget() {
+      const zoom = vb0.w / target.w;
+      zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+      zoomSlider.value = String(zoomToSliderValue(zoom));
+    }
+
+    // --- Animation loop for smoothness + inertia ---
+    let lastFrameT = performance.now();
+
+    function animate(now) {
+      const dt = Math.max(0.5, Math.min(50, now - lastFrameT)); // ms
+      lastFrameT = now;
+
+      if (svgEl && current && target) {
+        // Apply inertia by moving the *target* (camera follows target smoothly)
+        if (inertia.active) {
+          target.x += inertia.vx * dt;
+          target.y += inertia.vy * dt;
+
+          // decay velocity
+          inertia.vx *= Math.pow(FRICTION, dt / 16);
+          inertia.vy *= Math.pow(FRICTION, dt / 16);
+
+          if (Math.abs(inertia.vx) < MIN_V && Math.abs(inertia.vy) < MIN_V) {
+            inertia.active = false;
+          }
+        }
+
+        // Ease current toward target
+        const nx = current.x + (target.x - current.x) * EASE;
+        const ny = current.y + (target.y - current.y) * EASE;
+        const nw = current.w + (target.w - current.w) * EASE;
+        const nh = current.h + (target.h - current.h) * EASE;
+
+        // Snap if extremely close
+        const close =
+          Math.abs(nx - target.x) < STOP_EPS &&
+          Math.abs(ny - target.y) < STOP_EPS &&
+          Math.abs(nw - target.w) < STOP_EPS &&
+          Math.abs(nh - target.h) < STOP_EPS;
+
+        setViewBox(close ? copyVB(target) : { x: nx, y: ny, w: nw, h: nh });
+      }
+
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // --- Events ---
+    viewer.addEventListener("wheel", (e) => {
+      if (!svgEl) return;
+      e.preventDefault();
+      const factor = Math.exp(-e.deltaY * 0.002);
+      zoomAt(e.clientX, e.clientY, factor);
+    }, { passive: false });
+
+    viewer.addEventListener("dblclick", (e) => {
+      if (!svgEl) return;
+      zoomAt(e.clientX, e.clientY, e.shiftKey ? 1/1.6 : 1.6);
+    });
+
+    viewer.addEventListener("pointerdown", (e) => {
+      if (!svgEl) return;
+      viewer.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      inertia.active = false; // grabbing stops glide
+
+      if (pointers.size === 1) {
+        const p0 = screenToSvg(e.clientX, e.clientY);
+        dragStart = {
+          vbStart: copyVB(target),
+          svgStartPoint: p0,
+          lastSvg: p0,
+          lastT: performance.now()
+        };
+      } else if (pointers.size === 2) {
+        const pts = [...pointers.values()];
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const midClient = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+        const midSvg = screenToSvg(midClient.x, midClient.y);
+
+        pinchStart = { vbStart: copyVB(target), dist, midSvg };
+        dragStart = null;
+      }
+    });
+
+    viewer.addEventListener("pointermove", (e) => {
+      if (!svgEl) return;
+      if (!pointers.has(e.pointerId)) return;
+
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Pan
+      if (pointers.size === 1 && dragStart) {
+        const pNow = screenToSvg(e.clientX, e.clientY);
+
+        const dx = dragStart.svgStartPoint.x - pNow.x;
+        const dy = dragStart.svgStartPoint.y - pNow.y;
+
+        setTarget({
+          x: dragStart.vbStart.x + dx,
+          y: dragStart.vbStart.y + dy,
+          w: dragStart.vbStart.w,
+          h: dragStart.vbStart.h
+        });
+
+        // velocity for inertia (SVG units / ms)
+        const tNow = performance.now();
+        const dt = Math.max(1, tNow - dragStart.lastT);
+        inertia.vx = (dragStart.lastSvg.x - pNow.x) / dt; // note direction
+        inertia.vy = (dragStart.lastSvg.y - pNow.y) / dt;
+        dragStart.lastSvg = pNow;
+        dragStart.lastT = tNow;
+
+        return;
+      }
+
+      // Pinch zoom
+      if (pointers.size === 2 && pinchStart) {
+        const pts = [...pointers.values()];
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const zoomFactor = dist / pinchStart.dist; // >1 => zoom in
+        const base = pinchStart.vbStart;
+
+        const zoomBase = vb0.w / base.w;
+        const zoomNext = clamp(zoomBase * zoomFactor, 1 / MAX_ZOOM_OUT, MAX_ZOOM_IN);
+
+        const nextW = vb0.w / zoomNext;
+        const nextH = vb0.h / zoomNext;
+
+        const rx = (pinchStart.midSvg.x - base.x) / base.w;
+        const ry = (pinchStart.midSvg.y - base.y) / base.h;
+
+        setTarget({
+          w: nextW,
+          h: nextH,
+          x: pinchStart.midSvg.x - rx * nextW,
+          y: pinchStart.midSvg.y - ry * nextH
+        });
+
+        syncUIFromTarget();
+      }
+    });
+
+    function endPointer(e) {
+      pointers.delete(e.pointerId);
+
+      if (pointers.size === 0) {
+        // start inertia if velocity is meaningful
+        const speed = Math.hypot(inertia.vx, inertia.vy);
+        inertia.active = speed >= MIN_V;
+        dragStart = null;
+        pinchStart = null;
+      } else if (pointers.size === 1) {
+        // transition back to pan cleanly
+        pinchStart = null;
+        inertia.active = false;
+
+        const only = [...pointers.values()][0];
+        const p0 = screenToSvg(only.x, only.y);
+        dragStart = {
+          vbStart: copyVB(target),
+          svgStartPoint: p0,
+          lastSvg: p0,
+          lastT: performance.now()
+        };
+      }
+    }
+    viewer.addEventListener("pointerup", endPointer);
+    viewer.addEventListener("pointercancel", endPointer);
+
+    // Buttons
+    zoomInBtn.addEventListener("click", () => {
+      if (!svgEl) return;
+      const r = viewer.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1.35);
+    });
+    zoomOutBtn.addEventListener("click", () => {
+      if (!svgEl) return;
+      const r = viewer.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1/1.35);
+    });
+    resetBtn.addEventListener("click", resetView);
+    fitBtn.addEventListener("click", fitToScreen);
+
+    // Slider (zoom around center)
+    zoomSlider.addEventListener("input", () => {
+      if (!svgEl) return;
+      const desiredZoom = sliderValueToZoom(Number(zoomSlider.value));
+      const currentZoom = vb0.w / target.w;
+      const factor = desiredZoom / currentZoom;
+
+      const r = viewer.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, factor);
+    });
+
+    // Keyboard reset
+    window.addEventListener("keydown", (e) => {
+      if (!svgEl) return;
+      if (e.key === "0") resetView();
+    });
 
     async function loadInlineSvg(url) {
       const res = await fetch(url, { cache: "no-store" });
@@ -130,127 +466,17 @@
       svgEl = viewer.querySelector("svg");
       if (!svgEl) throw new Error("No <svg> found in loaded file.");
 
-      // Make it scale nicely
       if (!svgEl.getAttribute("preserveAspectRatio")) {
         svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
       }
 
       vb0 = initViewBoxFromSvg(svgEl);
-      setViewBox({ ...vb0 });
+      target = copyVB(vb0);
+      current = copyVB(vb0);
+      setViewBox(copyVB(vb0));
+      syncUIFromTarget();
     }
 
-    // Wheel zoom (desktop)
-    viewer.addEventListener("wheel", (e) => {
-      if (!svgEl) return;
-      e.preventDefault();
-      // Smooth zoom curve; trackpad-friendly
-      const factor = Math.exp(-e.deltaY * 0.002);
-      zoomAt(e.clientX, e.clientY, factor);
-    }, { passive: false });
-
-    // Pointer pan + pinch
-    viewer.addEventListener("pointerdown", (e) => {
-      if (!svgEl) return;
-      viewer.setPointerCapture(e.pointerId);
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      if (pointers.size === 1) {
-        const p0 = screenToSvg(e.clientX, e.clientY);
-        dragStart = { vbStart: { ...vb }, svgStartPoint: p0 };
-      } else if (pointers.size === 2) {
-        const pts = [...pointers.values()];
-        const dx = pts[1].x - pts[0].x;
-        const dy = pts[1].y - pts[0].y;
-        const dist = Math.hypot(dx, dy);
-        const midClient = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
-        const midSvg = screenToSvg(midClient.x, midClient.y);
-
-        pinchStart = { vbStart: { ...vb }, dist, midSvg };
-      }
-    });
-
-    viewer.addEventListener("pointermove", (e) => {
-      if (!svgEl) return;
-      if (!pointers.has(e.pointerId)) return;
-
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      // Pan (one pointer)
-      if (pointers.size === 1 && dragStart) {
-        const pNow = screenToSvg(e.clientX, e.clientY);
-        const dx = dragStart.svgStartPoint.x - pNow.x;
-        const dy = dragStart.svgStartPoint.y - pNow.y;
-
-        setViewBox({
-          x: dragStart.vbStart.x + dx,
-          y: dragStart.vbStart.y + dy,
-          w: dragStart.vbStart.w,
-          h: dragStart.vbStart.h
-        });
-        return;
-      }
-
-      // Pinch zoom (two pointers)
-      if (pointers.size === 2 && pinchStart) {
-        const pts = [...pointers.values()];
-        const dx = pts[1].x - pts[0].x;
-        const dy = pts[1].y - pts[0].y;
-        const dist = Math.hypot(dx, dy);
-
-        const zoomFactor = dist / pinchStart.dist;
-        // zoomFactor > 1 => fingers apart => zoom in => viewBox smaller
-        const base = pinchStart.vbStart;
-
-        const nextW = base.w / zoomFactor;
-        const nextH = base.h / zoomFactor;
-
-        const minW = vb0.w / 60;
-        const maxW = vb0.w * 3;
-        const w = clamp(nextW, minW, maxW);
-        const h = clamp(nextH, (vb0.h / vb0.w) * minW, (vb0.h / vb0.w) * maxW);
-
-        // Keep pinch midpoint stable in SVG coords
-        const rx = (pinchStart.midSvg.x - base.x) / base.w;
-        const ry = (pinchStart.midSvg.y - base.y) / base.h;
-
-        setViewBox({
-          w,
-          h,
-          x: pinchStart.midSvg.x - rx * w,
-          y: pinchStart.midSvg.y - ry * h
-        });
-      }
-    });
-
-    function endPointer(e) {
-      pointers.delete(e.pointerId);
-      if (pointers.size === 0) {
-        dragStart = null;
-        pinchStart = null;
-      } else if (pointers.size === 1) {
-        // transition back to pan cleanly
-        const only = [...pointers.values()][0];
-        const p0 = screenToSvg(only.x, only.y);
-        dragStart = { vbStart: { ...vb }, svgStartPoint: p0 };
-        pinchStart = null;
-      }
-    }
-    viewer.addEventListener("pointerup", endPointer);
-    viewer.addEventListener("pointercancel", endPointer);
-
-    // Double click to zoom in (desktop)
-    viewer.addEventListener("dblclick", (e) => {
-      if (!svgEl) return;
-      zoomAt(e.clientX, e.clientY, e.shiftKey ? 0.5 : 2);
-    });
-
-    // Press 0 to reset
-    window.addEventListener("keydown", (e) => {
-      if (!svgEl) return;
-      if (e.key === "0") setViewBox({ ...vb0 });
-    });
-
-    // Load the SVG
     loadInlineSvg("./casos.svg").catch(err => {
       viewer.innerHTML = `<pre style="padding:16px;font-family:monospace;">${err.message}</pre>`;
       console.error(err);
