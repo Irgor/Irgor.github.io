@@ -10,31 +10,6 @@
       width: 100%;
       height: 100dvh;
       overflow: hidden;
-      display: flex;
-    }
-
-    /* Fullscreen viewer that captures gestures */
-    #viewer {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-      touch-action: none;          /* key for pinch/drag handling */
-      overscroll-behavior: none;
-    }
-
-    /* The SVG image we transform */
-    #map {
-      position: absolute;
-      top: 0;
-      left: 0;
-      transform-origin: 0 0;
-      will-change: transform;
-      user-select: none;
-      -webkit-user-drag: none;
-
-      /* keep your sizing intent */
-      height: 94dvh;
-      width: auto;
     }
 
     a {
@@ -42,170 +17,243 @@
       bottom: 20px;
       right: 20px;
       z-index: 10;
+      background: rgba(255,255,255,0.85);
+      padding: 10px 12px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #000;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
-    @media screen and (max-width: 460px) {
-      #map {
-        height: auto;
-        width: 84dvw;
-      }
+    #viewer {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none; /* important: allow us to handle pinch/drag */
+      overscroll-behavior: none;
+      background: #fff;
+    }
+
+    /* Inline SVG should fill the viewer */
+    #viewer svg {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
   </style>
 </head>
 
 <body>
-  <a href="./casos.svg" download="casos.svg" class="download-btn">Baixar Casos</a>
-
-  <div id="viewer">
-    <img id="map" src="./casos.svg" alt="Casos" />
-  </div>
+  <a href="./casos.svg" download="casos.svg">Baixar Casos</a>
+  <div id="viewer"></div>
 
   <script>
     const viewer = document.getElementById("viewer");
-    const img = document.getElementById("map");
 
-    let scale = 1;
-    let translate = { x: 0, y: 0 };
-    const minScale = 0.5;
-    const maxScale = 40;
-
+    let svgEl = null;
+    let vb = null;          // current viewBox: {x,y,w,h}
+    let vb0 = null;         // initial viewBox for clamping
     const pointers = new Map();
-    let lastPanPoint = null;
+    let dragStart = null;   // { vbStart, svgStartPoint }
+    let pinchStart = null;  // { vbStart, dist, midSvg }
 
-    let pinchStart = null;
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 
-    function clamp(v, min, max) {
-      return Math.min(max, Math.max(min, v));
+    function setViewBox(next) {
+      vb = next;
+      svgEl.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
     }
 
-    function applyTransform() {
-      img.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+    function screenToSvg(clientX, clientY) {
+      // Convert screen coords to SVG coords (respects current viewBox)
+      const pt = svgEl.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      const ctm = svgEl.getScreenCTM();
+      if (!ctm) return { x: 0, y: 0 };
+      const p = pt.matrixTransform(ctm.inverse());
+      return { x: p.x, y: p.y };
     }
 
-    function viewerPointFromEvent(e) {
-      const r = viewer.getBoundingClientRect();
-      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    function zoomAt(clientX, clientY, zoomFactor) {
+      // zoomFactor > 1 zooms in, < 1 zooms out
+      const p = screenToSvg(clientX, clientY);
+
+      const nextW = vb.w / zoomFactor;
+      const nextH = vb.h / zoomFactor;
+
+      // clamp zoom range relative to initial viewBox
+      const minW = vb0.w / 60;   // allow deep zoom in (adjust to taste)
+      const maxW = vb0.w * 3;    // allow zoom out a bit
+      const w = clamp(nextW, minW, maxW);
+      const h = clamp(nextH, (vb0.h / vb0.w) * minW, (vb0.h / vb0.w) * maxW);
+
+      // keep cursor point stable: compute its relative position in viewBox
+      const rx = (p.x - vb.x) / vb.w;
+      const ry = (p.y - vb.y) / vb.h;
+
+      const next = {
+        w,
+        h,
+        x: p.x - rx * w,
+        y: p.y - ry * h
+      };
+
+      setViewBox(next);
     }
 
-    function centerImage() {
-      // Temporarily reset transform so we can measure the base (CSS) size
-      img.style.transform = "translate(0px, 0px) scale(1)";
-      const v = viewer.getBoundingClientRect();
-      const b = img.getBoundingClientRect();
+    function initViewBoxFromSvg(svg) {
+      // Prefer existing viewBox; fallback to width/height or bbox
+      const vbAttr = svg.getAttribute("viewBox");
+      if (vbAttr) {
+        const [x, y, w, h] = vbAttr.trim().split(/\s+|,/).map(Number);
+        if ([x,y,w,h].every(n => Number.isFinite(n))) return { x, y, w, h };
+      }
 
-      scale = 1;
-      translate.x = (v.width - b.width) / 2;
-      translate.y = (v.height - b.height) / 2;
+      const wAttr = parseFloat(svg.getAttribute("width"));
+      const hAttr = parseFloat(svg.getAttribute("height"));
+      if (Number.isFinite(wAttr) && Number.isFinite(hAttr)) {
+        return { x: 0, y: 0, w: wAttr, h: hAttr };
+      }
 
-      applyTransform();
+      // bbox fallback (can be slower on huge SVGs, but works)
+      const bbox = svg.getBBox();
+      return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
     }
 
-    function zoomAt(point, zoomFactor) {
-      const nextScale = clamp(scale * zoomFactor, minScale, maxScale);
+    async function loadInlineSvg(url) {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load SVG: ${res.status}`);
+      const text = await res.text();
 
-      // Keep the pixel under the cursor/fingers stable:
-      // local = (point - translate) / scale
-      const localX = (point.x - translate.x) / scale;
-      const localY = (point.y - translate.y) / scale;
+      viewer.innerHTML = text;
+      svgEl = viewer.querySelector("svg");
+      if (!svgEl) throw new Error("No <svg> found in loaded file.");
 
-      translate.x = point.x - localX * nextScale;
-      translate.y = point.y - localY * nextScale;
-      scale = nextScale;
+      // Make it scale nicely
+      if (!svgEl.getAttribute("preserveAspectRatio")) {
+        svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      }
 
-      applyTransform();
+      vb0 = initViewBoxFromSvg(svgEl);
+      setViewBox({ ...vb0 });
     }
-
-    // Initial center once the SVG is laid out
-    img.addEventListener("load", centerImage);
-    window.addEventListener("resize", centerImage);
 
     // Wheel zoom (desktop)
     viewer.addEventListener("wheel", (e) => {
+      if (!svgEl) return;
       e.preventDefault();
-      const p = viewerPointFromEvent(e);
-      const zoomFactor = Math.exp(-e.deltaY * 0.002); // smooth zoom
-      zoomAt(p, zoomFactor);
+      // Smooth zoom curve; trackpad-friendly
+      const factor = Math.exp(-e.deltaY * 0.002);
+      zoomAt(e.clientX, e.clientY, factor);
     }, { passive: false });
 
-    // Pointer-based pan + pinch (mobile + modern desktop)
+    // Pointer pan + pinch
     viewer.addEventListener("pointerdown", (e) => {
+      if (!svgEl) return;
       viewer.setPointerCapture(e.pointerId);
-      const p = viewerPointFromEvent(e);
-      pointers.set(e.pointerId, p);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       if (pointers.size === 1) {
-        lastPanPoint = p;
+        const p0 = screenToSvg(e.clientX, e.clientY);
+        dragStart = { vbStart: { ...vb }, svgStartPoint: p0 };
       } else if (pointers.size === 2) {
-        const [p1, p2] = [...pointers.values()];
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        pinchStart = {
-          dist: Math.hypot(dx, dy),
-          scale,
-          translate: { ...translate },
-          mid: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
-        };
+        const pts = [...pointers.values()];
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+        const midClient = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+        const midSvg = screenToSvg(midClient.x, midClient.y);
+
+        pinchStart = { vbStart: { ...vb }, dist, midSvg };
       }
     });
 
     viewer.addEventListener("pointermove", (e) => {
+      if (!svgEl) return;
       if (!pointers.has(e.pointerId)) return;
 
-      const p = viewerPointFromEvent(e);
-      pointers.set(e.pointerId, p);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      if (pointers.size === 1 && lastPanPoint) {
-        const dx = p.x - lastPanPoint.x;
-        const dy = p.y - lastPanPoint.y;
-        translate.x += dx;
-        translate.y += dy;
-        lastPanPoint = p;
-        applyTransform();
+      // Pan (one pointer)
+      if (pointers.size === 1 && dragStart) {
+        const pNow = screenToSvg(e.clientX, e.clientY);
+        const dx = dragStart.svgStartPoint.x - pNow.x;
+        const dy = dragStart.svgStartPoint.y - pNow.y;
+
+        setViewBox({
+          x: dragStart.vbStart.x + dx,
+          y: dragStart.vbStart.y + dy,
+          w: dragStart.vbStart.w,
+          h: dragStart.vbStart.h
+        });
         return;
       }
 
+      // Pinch zoom (two pointers)
       if (pointers.size === 2 && pinchStart) {
-        const [p1, p2] = [...pointers.values()];
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
+        const pts = [...pointers.values()];
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
         const dist = Math.hypot(dx, dy);
-        const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
 
         const zoomFactor = dist / pinchStart.dist;
-        const nextScale = clamp(pinchStart.scale * zoomFactor, minScale, maxScale);
+        // zoomFactor > 1 => fingers apart => zoom in => viewBox smaller
+        const base = pinchStart.vbStart;
 
-        // Zoom around the *starting* midpoint in viewer coordinates
-        const localX = (pinchStart.mid.x - pinchStart.translate.x) / pinchStart.scale;
-        const localY = (pinchStart.mid.y - pinchStart.translate.y) / pinchStart.scale;
+        const nextW = base.w / zoomFactor;
+        const nextH = base.h / zoomFactor;
 
-        // Allow midpoint to drift naturally by using current mid for translate anchoring
-        translate.x = mid.x - localX * nextScale;
-        translate.y = mid.y - localY * nextScale;
-        scale = nextScale;
+        const minW = vb0.w / 60;
+        const maxW = vb0.w * 3;
+        const w = clamp(nextW, minW, maxW);
+        const h = clamp(nextH, (vb0.h / vb0.w) * minW, (vb0.h / vb0.w) * maxW);
 
-        applyTransform();
+        // Keep pinch midpoint stable in SVG coords
+        const rx = (pinchStart.midSvg.x - base.x) / base.w;
+        const ry = (pinchStart.midSvg.y - base.y) / base.h;
+
+        setViewBox({
+          w,
+          h,
+          x: pinchStart.midSvg.x - rx * w,
+          y: pinchStart.midSvg.y - ry * h
+        });
       }
     });
 
     function endPointer(e) {
       pointers.delete(e.pointerId);
-      if (pointers.size < 2) pinchStart = null;
-      if (pointers.size === 1) lastPanPoint = [...pointers.values()][0] ?? null;
-      if (pointers.size === 0) lastPanPoint = null;
+      if (pointers.size === 0) {
+        dragStart = null;
+        pinchStart = null;
+      } else if (pointers.size === 1) {
+        // transition back to pan cleanly
+        const only = [...pointers.values()][0];
+        const p0 = screenToSvg(only.x, only.y);
+        dragStart = { vbStart: { ...vb }, svgStartPoint: p0 };
+        pinchStart = null;
+      }
     }
-
     viewer.addEventListener("pointerup", endPointer);
     viewer.addEventListener("pointercancel", endPointer);
 
-    // Double click/tap to zoom in; Shift + double click to zoom out
+    // Double click to zoom in (desktop)
     viewer.addEventListener("dblclick", (e) => {
-      const p = viewerPointFromEvent(e);
-      zoomAt(p, e.shiftKey ? 0.5 : 2);
+      if (!svgEl) return;
+      zoomAt(e.clientX, e.clientY, e.shiftKey ? 0.5 : 2);
     });
 
-    // Press 0 to reset/center
+    // Press 0 to reset
     window.addEventListener("keydown", (e) => {
-      if (e.key === "0") centerImage();
+      if (!svgEl) return;
+      if (e.key === "0") setViewBox({ ...vb0 });
+    });
+
+    // Load the SVG
+    loadInlineSvg("./casos.svg").catch(err => {
+      viewer.innerHTML = `<pre style="padding:16px;font-family:monospace;">${err.message}</pre>`;
+      console.error(err);
     });
   </script>
 </body>
