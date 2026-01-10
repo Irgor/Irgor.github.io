@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,7 +12,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      touch-action: none;           /* we handle pan/pinch */
+      touch-action: none;           /* a gente controla pan/pinch */
       overscroll-behavior: none;
       user-select: none;
       -webkit-user-select: none;
@@ -24,7 +24,7 @@
       display: block;
     }
 
-    /* Download button */
+    /* Botão de download */
     .download-btn{
       position: absolute;
       bottom: 20px;
@@ -40,7 +40,7 @@
       backdrop-filter: blur(8px);
     }
 
-    /* Zoom controls */
+    /* Controles de zoom (colapsáveis) */
     .controls{
       position: absolute;
       top: 16px;
@@ -52,9 +52,10 @@
       padding: 10px;
       display: grid;
       gap: 8px;
-      width: min(320px, calc(100vw - 32px));
+      width: min(360px, calc(100vw - 32px));
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       backdrop-filter: blur(8px);
+      transition: padding 160ms ease, width 160ms ease;
     }
 
     .row{
@@ -63,32 +64,68 @@
       align-items: center;
     }
 
+    .header{
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .title{
+      font-weight: 700;
+      color: #111;
+      white-space: nowrap;
+    }
+
     button{
       border: 1px solid rgba(0,0,0,0.10);
       background: #fff;
       border-radius: 12px;
       padding: 10px 12px;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
       color: #111;
     }
     button:active { transform: translateY(1px); }
 
-    input[type="range"]{
-      width: 100%;
-    }
+    input[type="range"]{ width: 100%; }
 
     .zoomLabel{
-      min-width: 70px;
+      min-width: 90px;
       text-align: right;
       font-variant-numeric: tabular-nums;
       color: #111;
-      font-weight: 600;
+      font-weight: 700;
+      white-space: nowrap;
     }
+
     .hint{
       font-size: 12px;
-      opacity: 0.7;
-      line-height: 1.2;
+      opacity: 0.72;
+      line-height: 1.25;
+    }
+
+    /* Estado colapsado */
+    .controls.collapsed{
+      width: auto;
+      padding: 8px;
+    }
+
+    .controls.collapsed .hide-when-collapsed{
+      display: none;
+    }
+
+    .controls.collapsed .title,
+    .controls.collapsed .zoomLabel{
+      display: none;
+    }
+
+    #toggleControls{
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
     }
   </style>
 </head>
@@ -96,19 +133,26 @@
 <body>
   <a href="./casos.svg" download="casos.svg" class="download-btn">Baixar Casos</a>
 
-  <div class="controls">
-    <div class="row">
-      <button id="zoomOut" title="Zoom out">−</button>
-      <button id="zoomIn" title="Zoom in">+</button>
-      <button id="reset" title="Reset view">Reset</button>
-      <button id="fit" title="Fit to screen">Fit</button>
-      <div class="zoomLabel" id="zoomLabel">100%</div>
+  <div class="controls" id="controls">
+    <div class="row header">
+      <button id="toggleControls" title="Ocultar/mostrar controles" aria-label="Ocultar/mostrar controles">◀</button>
+      <div class="title">Controles</div>
+      <div class="zoomLabel" id="zoomLabel">Zoom 100%</div>
     </div>
-    <div class="row">
-      <input id="zoomSlider" type="range" min="0" max="1000" value="500" />
+
+    <div class="row hide-when-collapsed">
+      <button id="zoomOut" title="Afastar (diminuir zoom)">−</button>
+      <button id="zoomIn" title="Aproximar (aumentar zoom)">+</button>
+      <button id="reset" title="Reiniciar visão">Reiniciar</button>
+      <button id="fit" title="Ajustar à tela">Ajustar</button>
     </div>
-    <div class="hint">
-      Drag to pan • Wheel / pinch to zoom • Double click to zoom • Press <b>0</b> to reset
+
+    <div class="row hide-when-collapsed">
+      <input id="zoomSlider" type="range" min="0" max="1000" value="500" aria-label="Controle de zoom" />
+    </div>
+
+    <div class="hint hide-when-collapsed">
+      Arraste para mover • Roda do mouse / pinça para zoom • Duplo clique para zoom • Pressione <b>0</b> para reiniciar • <b>C</b> para ocultar/mostrar controles
     </div>
   </div>
 
@@ -116,7 +160,9 @@
 
   <script>
     const viewer = document.getElementById("viewer");
+    const controls = document.getElementById("controls");
 
+    const toggleBtn = document.getElementById("toggleControls");
     const zoomInBtn = document.getElementById("zoomIn");
     const zoomOutBtn = document.getElementById("zoomOut");
     const resetBtn = document.getElementById("reset");
@@ -126,27 +172,27 @@
 
     let svgEl = null;
 
-    // Camera (current viewBox eases toward target viewBox)
-    let vb0 = null;         // "native" starting viewBox
-    let current = null;     // what we render
-    let target = null;      // what interactions set
+    // Câmera (viewBox atual suaviza em direção ao viewBox alvo)
+    let vb0 = null;         // viewBox inicial
+    let current = null;     // o que renderiza
+    let target = null;      // o que as interações setam
 
-    // Tweak these for "fluid"
-    const EASE = 0.18;      // higher = snappier, lower = smoother
+    // Ajuste fino de “fluidez”
+    const EASE = 0.18;      // maior = mais “rápido”, menor = mais “flutuante”
     const STOP_EPS = 1e-6;
 
-    // Zoom limits (relative to vb0)
-    const MAX_ZOOM_IN = 60;       // deep zoom (vb0.w / current.w)
-    const MAX_ZOOM_OUT = 3;       // zoom out (current.w / vb0.w)
+    // Limites de zoom (relativos ao vb0)
+    const MAX_ZOOM_IN = 60;       // quão perto pode chegar
+    const MAX_ZOOM_OUT = 3;       // quanto pode afastar
 
-    // Inertia
+    // Inércia
     let inertia = { vx: 0, vy: 0, active: false };
-    const FRICTION = 0.92;        // closer to 1 = longer glide
-    const MIN_V = 0.0005;         // stop threshold (SVG units/ms)
+    const FRICTION = 0.92;        // mais perto de 1 = desliza mais tempo
+    const MIN_V = 0.0005;         // threshold (unidades SVG / ms)
 
-    // Pointer state
+    // Estado de ponteiros
     const pointers = new Map();
-    let dragStart = null;   // { vbStart, svgStartPoint, t, lastSvg, lastT }
+    let dragStart = null;   // { vbStart, svgStartPoint, lastSvg, lastT }
     let pinchStart = null;  // { vbStart, dist, midSvg }
 
     const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -194,7 +240,7 @@
     }
 
     function zoomAt(clientX, clientY, zoomFactor) {
-      // zoomFactor > 1 => zoom in (smaller viewBox)
+      // zoomFactor > 1 => aproxima (viewBox menor)
       const p = screenToSvg(clientX, clientY);
 
       const zoomNow = vb0.w / target.w;
@@ -203,7 +249,7 @@
       const nextW = vb0.w / zoomNext;
       const nextH = vb0.h / zoomNext;
 
-      // keep point stable
+      // manter o ponto sob o cursor estável
       const rx = (p.x - target.x) / target.w;
       const ry = (p.y - target.y) / target.h;
 
@@ -214,14 +260,6 @@
         y: p.y - ry * nextH
       });
 
-      inertia.active = false; // stop glide on explicit zoom
-      syncUIFromTarget();
-    }
-
-    function fitToScreen() {
-      // "Fit" here just means reset to vb0 (since SVG is already scaled to viewer)
-      // If you want a different fit mode, tell me your desired behavior.
-      setTarget(copyVB(vb0));
       inertia.active = false;
       syncUIFromTarget();
     }
@@ -232,9 +270,15 @@
       syncUIFromTarget();
     }
 
-    // --- Slider mapping (log-ish) ---
+    function fitToScreen() {
+      // “Ajustar” aqui = voltar ao viewBox original (a escala já é feita pelo CSS do SVG)
+      setTarget(copyVB(vb0));
+      inertia.active = false;
+      syncUIFromTarget();
+    }
+
+    // --- Slider (escala log) ---
     function zoomToSliderValue(zoom) {
-      // map zoom in [minZoom, maxZoom] to [0..1000] using log scale
       const minZ = 1 / MAX_ZOOM_OUT;
       const maxZ = MAX_ZOOM_IN;
       const t = (Math.log(zoom) - Math.log(minZ)) / (Math.log(maxZ) - Math.log(minZ));
@@ -250,24 +294,23 @@
 
     function syncUIFromTarget() {
       const zoom = vb0.w / target.w;
-      zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+      zoomLabel.textContent = `Zoom ${Math.round(zoom * 100)}%`;
       zoomSlider.value = String(zoomToSliderValue(zoom));
     }
 
-    // --- Animation loop for smoothness + inertia ---
+    // --- Animação: suavização + inércia ---
     let lastFrameT = performance.now();
 
     function animate(now) {
-      const dt = Math.max(0.5, Math.min(50, now - lastFrameT)); // ms
+      const dt = Math.max(0.5, Math.min(50, now - lastFrameT));
       lastFrameT = now;
 
       if (svgEl && current && target) {
-        // Apply inertia by moving the *target* (camera follows target smoothly)
+        // Inércia move o TARGET; câmera suaviza até ele
         if (inertia.active) {
           target.x += inertia.vx * dt;
           target.y += inertia.vy * dt;
 
-          // decay velocity
           inertia.vx *= Math.pow(FRICTION, dt / 16);
           inertia.vy *= Math.pow(FRICTION, dt / 16);
 
@@ -276,13 +319,11 @@
           }
         }
 
-        // Ease current toward target
         const nx = current.x + (target.x - current.x) * EASE;
         const ny = current.y + (target.y - current.y) * EASE;
         const nw = current.w + (target.w - current.w) * EASE;
         const nh = current.h + (target.h - current.h) * EASE;
 
-        // Snap if extremely close
         const close =
           Math.abs(nx - target.x) < STOP_EPS &&
           Math.abs(ny - target.y) < STOP_EPS &&
@@ -296,7 +337,7 @@
     }
     requestAnimationFrame(animate);
 
-    // --- Events ---
+    // --- Eventos ---
     viewer.addEventListener("wheel", (e) => {
       if (!svgEl) return;
       e.preventDefault();
@@ -314,7 +355,7 @@
       viewer.setPointerCapture(e.pointerId);
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      inertia.active = false; // grabbing stops glide
+      inertia.active = false;
 
       if (pointers.size === 1) {
         const p0 = screenToSvg(e.clientX, e.clientY);
@@ -358,10 +399,10 @@
           h: dragStart.vbStart.h
         });
 
-        // velocity for inertia (SVG units / ms)
+        // Velocidade para inércia
         const tNow = performance.now();
         const dt = Math.max(1, tNow - dragStart.lastT);
-        inertia.vx = (dragStart.lastSvg.x - pNow.x) / dt; // note direction
+        inertia.vx = (dragStart.lastSvg.x - pNow.x) / dt;
         inertia.vy = (dragStart.lastSvg.y - pNow.y) / dt;
         dragStart.lastSvg = pNow;
         dragStart.lastT = tNow;
@@ -376,7 +417,7 @@
         const dy = pts[1].y - pts[0].y;
         const dist = Math.hypot(dx, dy);
 
-        const zoomFactor = dist / pinchStart.dist; // >1 => zoom in
+        const zoomFactor = dist / pinchStart.dist; // >1 => aproxima
         const base = pinchStart.vbStart;
 
         const zoomBase = vb0.w / base.w;
@@ -395,6 +436,7 @@
           y: pinchStart.midSvg.y - ry * nextH
         });
 
+        inertia.active = false;
         syncUIFromTarget();
       }
     });
@@ -403,13 +445,12 @@
       pointers.delete(e.pointerId);
 
       if (pointers.size === 0) {
-        // start inertia if velocity is meaningful
         const speed = Math.hypot(inertia.vx, inertia.vy);
         inertia.active = speed >= MIN_V;
+
         dragStart = null;
         pinchStart = null;
       } else if (pointers.size === 1) {
-        // transition back to pan cleanly
         pinchStart = null;
         inertia.active = false;
 
@@ -426,7 +467,7 @@
     viewer.addEventListener("pointerup", endPointer);
     viewer.addEventListener("pointercancel", endPointer);
 
-    // Buttons
+    // Botões
     zoomInBtn.addEventListener("click", () => {
       if (!svgEl) return;
       const r = viewer.getBoundingClientRect();
@@ -440,7 +481,7 @@
     resetBtn.addEventListener("click", resetView);
     fitBtn.addEventListener("click", fitToScreen);
 
-    // Slider (zoom around center)
+    // Slider (zoom no centro)
     zoomSlider.addEventListener("input", () => {
       if (!svgEl) return;
       const desiredZoom = sliderValueToZoom(Number(zoomSlider.value));
@@ -451,20 +492,35 @@
       zoomAt(r.left + r.width/2, r.top + r.height/2, factor);
     });
 
-    // Keyboard reset
+    // Colapsar/expandir
+    function setCollapsed(collapsed) {
+      controls.classList.toggle("collapsed", collapsed);
+      toggleBtn.textContent = collapsed ? "▶" : "◀";
+      toggleBtn.title = collapsed ? "Mostrar controles" : "Ocultar controles";
+      toggleBtn.setAttribute("aria-label", toggleBtn.title);
+      try { localStorage.setItem("controlsCollapsed", String(collapsed)); } catch {}
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      setCollapsed(!controls.classList.contains("collapsed"));
+    });
+
+    // Teclas: 0 reseta / C colapsa
     window.addEventListener("keydown", (e) => {
       if (!svgEl) return;
       if (e.key === "0") resetView();
+      if (e.key.toLowerCase() === "c") setCollapsed(!controls.classList.contains("collapsed"));
     });
 
     async function loadInlineSvg(url) {
       const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Failed to load SVG: ${res.status}`);
-      const text = await res.text();
+      if (!res.ok) throw new Error(`Falha ao carregar o SVG: ${res.status}`);
 
+      const text = await res.text();
       viewer.innerHTML = text;
+
       svgEl = viewer.querySelector("svg");
-      if (!svgEl) throw new Error("No <svg> found in loaded file.");
+      if (!svgEl) throw new Error("Nenhuma tag <svg> foi encontrada no arquivo.");
 
       if (!svgEl.getAttribute("preserveAspectRatio")) {
         svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
@@ -475,6 +531,11 @@
       current = copyVB(vb0);
       setViewBox(copyVB(vb0));
       syncUIFromTarget();
+
+      // restaurar estado do painel
+      let saved = null;
+      try { saved = localStorage.getItem("controlsCollapsed"); } catch {}
+      setCollapsed(saved === "true");
     }
 
     loadInlineSvg("./casos.svg").catch(err => {
